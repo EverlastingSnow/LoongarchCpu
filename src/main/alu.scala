@@ -83,8 +83,6 @@ class alu extends Module {
     sllRes := io.aluSrc1 << io.aluSrc2(4, 0)
     sr64Res := Cat(Fill(32, (opSra & io.aluSrc1(31))), io.aluSrc1(31, 0)) >> io.aluSrc2(4, 0) //QUESTION
 
-    //val extend6 = Module(new SignExtender(32, dataBitWidth))
-    //extend6.io.original := sr64Res(31, 0)
     srRes := sr64Res(31, 0)
 
     io.aluRes := (Fill(dataBitWidth, (opAdd | opSub)) & addSubRes) |
