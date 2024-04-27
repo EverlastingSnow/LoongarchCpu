@@ -7,60 +7,77 @@ import Myconsts._
 class ExuMessage extends Bundle {
     val pc = Output(UInt(addrBitWidth.W))
     val aluRes = Output(UInt(dataBitWidth.W))
-    // val pcJump = Output(UInt(1.W))
     val resFromMem = Output(UInt(1.W))
     val grWe = Output(UInt(1.W))    
     val dest = Output(UInt(5.W))
+    val valid = Output(Bool())
+    val rfdata = Output(UInt(dataBitWidth.W))
+    val memWe = Output(UInt(1.W))
+
 }
 class EXU extends Module{
     val io = IO(new Bundle{
-        val in = Flipped(Decoupled(new IduMessage))
-        val data_sram_rdata = Input(UInt(dataBitWidth.W))    
-        val data_sram_en = Output(UInt(1.W))
-        val data_sram_we = Output(UInt(4.W))
-        val data_sram_addr = Output(UInt(dataBitWidth.W))
-        val data_sram_wdata = Output(UInt(dataBitWidth.W))
-        val out = Decoupled(new ExuMessage)
+        val in = Flipped(new IduMessage())    
+        //val data = new data_info()
+        val out = new ExuMessage()
+        val exu_allowin = Output(Bool())
+        val mem_allowin = Input(Bool())
     })
 
-    val ex_me_pc = Wire(UInt(addrBitWidth.W))
-    val ex_me_aluRes = Wire(UInt(dataBitWidth.W))
-    val ex_me_resFromMem = RegInit(UInt(1.W))
-    val ex_me_grWe = RegInit(UInt(1.W))
-    val ex_me_dest = RegInit(UInt(5.W))
+    // val ex_me_pc = Reg(UInt(addrBitWidth.W))
+    // val ex_me_aluRes = Reg(UInt(dataBitWidth.W))
+    // val ex_me_resFromMem = Reg(UInt(1.W))
+    // val ex_me_grWe = Reg(UInt(1.W))
+    // val ex_me_dest = Reg(UInt(5.W))
+    val exu_ready_go = true.B 
+    val exu_valid = RegInit(false.B)
+    val exu_allowin = (~exu_valid) || (io.mem_allowin && exu_ready_go)
+    when(exu_allowin) {exu_valid := io.in.valid}
+    io.out.valid := exu_ready_go && exu_valid
+    io.exu_allowin := exu_allowin
 
-    val memRes = Wire(UInt(dataBitWidth.W))
-    memRes := io.data_sram_rdata
-
+    val id_ex_pc = Reg(UInt(addrBitWidth.W))
+    val id_ex_aluSrc1 = Reg(UInt(dataBitWidth.W))
+    val id_ex_aluSrc2 = Reg(UInt(dataBitWidth.W))
+    val id_ex_memWe = Reg(UInt(1.W))
+    val id_ex_aluOp = Reg(UInt(12.W))
+    val id_ex_rfdata = Reg(UInt(dataBitWidth.W))
+    val id_ex_resFromMem = Reg(UInt(1.W))
+    val id_ex_grWe = Reg(UInt(1.W))
+    val id_ex_dest = Reg(UInt(5.W))
+    when(exu_allowin && io.in.valid){
+        // ex_me_pc := io.in.pc
+        // ex_me_aluRes := u_alu.io.aluRes
+        // ex_me_resFromMem := io.in.resFromMem
+        // ex_me_grWe := io.in.grWe
+        // ex_me_dest := io.in.dest
+        id_ex_pc := io.in.pc
+        id_ex_aluSrc1 := io.in.aluSrc1
+        id_ex_aluSrc2 := io.in.aluSrc2
+        id_ex_memWe := io.in.memWe
+        id_ex_aluOp := io.in.aluOp
+        id_ex_rfdata := io.in.rfdata
+        id_ex_resFromMem := io.in.resFromMem
+        id_ex_grWe := io.in.grWe
+        id_ex_dest := io.in.dest 
+    }
 
     val u_alu = Module(new alu)
 
-    u_alu.io.aluOp := io.in.bits.aluOp
-    u_alu.io.aluSrc1 := io.in.bits.aluSrc1
-    u_alu.io.aluSrc2 := io.in.bits.aluSrc2
+    u_alu.io.aluOp := id_ex_aluOp
+    u_alu.io.aluSrc1 := id_ex_aluSrc1
+    u_alu.io.aluSrc2 := id_ex_aluSrc2
 
-    io.out.bits.aluRes := ex_me_aluRes
-    io.out.bits.resFromMem := ex_me_resFromMem
-    io.out.bits.grWe := ex_me_grWe
-    io.out.bits.dest := ex_me_dest
-    io.out.bits.pc := ex_me_pc
+    io.out.aluRes := u_alu.io.aluRes
+    io.out.resFromMem := id_ex_resFromMem
+    io.out.grWe := id_ex_grWe
+    io.out.dest := id_ex_dest
+    io.out.pc := id_ex_pc
+    io.out.memWe := id_ex_memWe
+    io.out.rfdata := id_ex_rfdata
 
-    val dataReceived = RegInit(false.B)
-    when(io.in.valid && !dataReceived && reset === false.B){
-        ex_me_pc := io.in.bits.pc
-        ex_me_aluRes := u_alu.io.aluRes
-        ex_me_resFromMem := io.in.bits.resFromMem
-        ex_me_grWe := io.in.bits.grWe
-        ex_me_dest := io.in.bits.dest
-        dataReceived := true.B
-    }.elsewhen(io.out.ready && reset === false.B){
-        dataReceived := false.B
-    }
-    io.in.ready := !dataReceived && io.out.ready
-    io.out.valid := dataReceived && io.in.valid
-
-    io.data_sram_en := 1.U 
-    io.data_sram_we := Mux((io.in.bits.memWe === 1.U && io.out.valid), Fill(4, 1.U), Fill(4, 0.U))
-    io.data_sram_addr := u_alu.io.aluRes
-    io.data_sram_wdata := io.in.bits.rfdata
+    // io.data.data_sram_en := 1.U 
+    // io.data.data_sram_we := Mux((io.in.memWe === 1.U && io.out.valid), Fill(4, 1.U), Fill(4, 0.U))
+    // io.data.data_sram_addr := u_alu.io.aluRes
+    // io.data.data_sram_wdata := io.in.rfdata
 }

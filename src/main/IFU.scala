@@ -4,24 +4,25 @@ import chisel3._
 import chisel3.util._
 import Myconsts._
 
-class IfuIn extends Bundle {
-    val inst_sram_rdata = Input(UInt(dataBitWidth.W))
-}
 class IfuMessage extends Bundle {
     val inst = Output(UInt(instBitWidth.W))
     val pc = Output(UInt(addrBitWidth.W))
+    val valid = Output(Bool())
 }
 class IFU extends Module {
     val io = IO(new Bundle{
-        val in = new IfuIn
-        val brTaken = Input(UInt(1.W))
-        val brTarget = Input(UInt(32.W))
-        val inst_sram_en = Output(UInt(1.W))
-        val inst_sram_we = Output(UInt(4.W))
-        val inst_sram_addr = Output(UInt(addrBitWidth.W))
-        val inst_sram_wdata = Output(UInt(dataBitWidth.W))
-        val out = Decoupled(new IfuMessage)
+        val br = new br_info()
+        val inst = new inst_info()
+        val out = new IfuMessage()
+        val idu_allowin = Input(Bool())
     })
+
+    val to_ifu_valid = (reset.asBool === false.B)
+    val ifu_ready_go = true.B 
+    val ifu_valid = RegInit(false.B)
+    val ifu_allowin = (~ifu_valid) || (io.idu_allowin && ifu_ready_go)
+    when(ifu_allowin) {ifu_valid := to_ifu_valid}
+    io.out.valid := ifu_valid && ifu_ready_go
 
     val snPc = Wire(UInt(addrBitWidth.W))
     val dnPc = Wire(UInt(addrBitWidth.W))
@@ -29,31 +30,29 @@ class IFU extends Module {
 
     
     snPc := pc + "h4".U;
-    dnPc := Mux(io.brTaken === 1.U, io.brTarget, snPc)
-    
-    when(reset === true.B){
-        io.out.valid := false.B
+    dnPc := Mux(io.br.brTaken === 1.U, io.br.brTarget, snPc)
+
+    // val if_id_inst = Reg(UInt(instBitWidth.W))
+    // val if_id_pc = Reg(UInt(addrBitWidth.W))
+        
+    when(reset.asBool === true.B){
         pc := "h1bfffffc".U(addrBitWidth.W)
-    }.otherwise{
-        when (io.out.ready){
-            if_id_inst := io.in.inst_sram_rdata
-            if_id_pc := dnPc
-            io.out.valid := true.B
-        }.otherwise{
-            io.out.valid := false.B
-        }
+    }
+    when(to_ifu_valid && ifu_allowin){
+        // if_id_inst := io.in.inst_sram_rdata
+        // if_id_pc := dnPc
+        pc := dnPc
     }
 
-    val if_id_inst = RegInit(UInt(instBitWidth.W))
-    val if_id_pc = RegInit(UInt(addrBitWidth.W))
     
     //io.out.ready := !io.out.valid || (io.out.valid & io.in.ready)
 
-    io.inst_sram_en := io.out.ready
-    io.inst_sram_we := Fill(4, 0.U)
-    io.inst_sram_addr := dnPc
-    io.inst_sram_wdata := Fill(32, 0.U)
+    io.inst.inst_sram_en := to_ifu_valid && ifu_allowin
+    //io.inst.inst_sram_en := 1.U
+    io.inst.inst_sram_we := Fill(4, 0.U)
+    io.inst.inst_sram_addr := dnPc
+    io.inst.inst_sram_wdata := Fill(32, 0.U)
 
-    io.out.bits.inst := if_id_inst
-    io.out.bits.pc := if_id_pc
+    io.out.inst := io.inst.inst_sram_rdata
+    io.out.pc := pc
 }

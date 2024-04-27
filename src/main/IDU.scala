@@ -11,24 +11,48 @@ class IduMessage extends Bundle{
     val aluSrc2 = Output(UInt(dataBitWidth.W))
     val memWe = Output(UInt(1.W))
     val rfdata = Output(UInt(dataBitWidth.W))
-    // val pcJump = Output(UInt(1.W))
     val resFromMem = Output(UInt(1.W))
     val grWe = Output(UInt(1.W))    
     val dest = Output(UInt(5.W))
+    val valid = Output(Bool())
 }
 class IDU extends Module {
     val io = IO(new Bundle{
-        val in = Flipped(Decoupled(new IfuMessage))
-        val brTaken = Output(UInt(1.W))
-        val brTarget = Output(UInt(32.W))
-        val out = Decoupled(new IduMessage)
+        val in = Flipped(new IfuMessage())
+        val br = Flipped(new br_info())
+        val out = new IduMessage()
         val rfWe = Input(UInt(1.W))
         val rfWaddr = Input(UInt(5.W))
         val rfWdata = Input(UInt(dataBitWidth.W))
+        val idu_allowin = Output(Bool())
+        val exu_allowin = Input(Bool())
     })
+    val if_id_inst = Reg(UInt(instBitWidth.W))
+    val if_id_pc = Reg(UInt(addrBitWidth.W))
+    
+    val idu_ready_go = true.B 
+    val idu_valid = RegInit(false.B)
+    val idu_allowin = (~idu_valid) || (io.exu_allowin && idu_ready_go)
+    when(idu_allowin) {idu_valid := io.in.valid}
+    io.out.valid := idu_ready_go && idu_valid
+    io.idu_allowin := idu_allowin
 
+    when (idu_allowin && io.in.valid){
+        if_id_inst := io.in.inst
+        if_id_pc := io.in.pc
+        // id_ex_pc := io.in.pc
+        // id_ex_aluSrc1 := aluSrc1
+        // id_ex_aluSrc2 := aluSrc2
+        // id_ex_memWe := memWe
+        // id_ex_aluOp := aluOp
+        // id_ex_rfdata := rkValue
+        // id_ex_resFromMem := resFromMem
+        // id_ex_grWe := grWe
+        // id_ex_dest := dest 
+    }
+    
     val inst = Wire(UInt(addrBitWidth.W))
-    inst := io.in.bits.inst
+    inst := if_id_inst
     val op31_26 = Wire(UInt(6.W))
     val op25_22 = Wire(UInt(4.W))
     val op21_20 = Wire(UInt(2.W))
@@ -66,15 +90,15 @@ class IDU extends Module {
     val instBne = Wire(UInt(1.W))
     val instLu12iW = Wire(UInt(1.W))
 
-    val id_ex_pc = RegInit(UInt(addrBitWidth.W))
-    val id_ex_aluSrc1 = RegInit(UInt(dataBitWidth.W))
-    val id_ex_aluSrc2 = RegInit(UInt(dataBitWidth.W))
-    val id_ex_memWe = RegInit(UInt(1.W))
-    val id_ex_aluOp = RegInit(UInt(12.W))
-    val id_ex_rfdata = RegInit(UInt(dataBitWidth.W))
-    val id_ex_resFromMem = RegInit(UInt(1.W))
-    val id_ex_grWe = RegInit(UInt(1.W))
-    val id_ex_dest = RegInit(UInt(5.W))
+    // val id_ex_pc = Reg(UInt(addrBitWidth.W))
+    // val id_ex_aluSrc1 = Reg(UInt(dataBitWidth.W))
+    // val id_ex_aluSrc2 = Reg(UInt(dataBitWidth.W))
+    // val id_ex_memWe = Reg(UInt(1.W))
+    // val id_ex_aluOp = Reg(UInt(12.W))
+    // val id_ex_rfdata = Reg(UInt(dataBitWidth.W))
+    // val id_ex_resFromMem = Reg(UInt(1.W))
+    // val id_ex_grWe = Reg(UInt(1.W))
+    // val id_ex_dest = Reg(UInt(5.W))
 
     op31_26 := inst(31, 26)
     op25_22 := inst(25, 22)
@@ -124,21 +148,6 @@ class IDU extends Module {
     instBeq := op31_26d(22)
     instBne := op31_26d(23)
     instLu12iW:= op31_26d(5) & (~inst(25))
-    
-    val brTaken = Wire(UInt(1.W))
-    brTaken := Mux((instBeq === 1.U && rjEqRd === 1.U) || (instBne === 1.U && (!rjEqRd) === 1.U) || (instJirl === 1.U) || (instBl === 1.U) || (instB === 1.U), 1.U, 0.U)
-    io.brTaken := brTaken
-
-    val brOffs = Wire(UInt(addrBitWidth.W))
-    brOffs := Mux(need_si26 === 1.U, Cat(Fill(4, i26(25)), i26(25, 0), 0.U(2.W)), 
-    Cat(Fill(14, i16(15)), i16(15, 0), 0.U(2.W))
-    )
-    val jirlOffs = Wire(UInt(addrBitWidth.W))
-
-    jirlOffs := Cat(Fill(14, i16(15)), i16(15, 0), 0.U(2.W))
-    val brTarget = Wire(UInt(dataBitWidth.W))
-    brTarget := Mux(instBeq === 1.U || instBne === 1.U || instBl === 1.U || instB === 1.U, io.in.bits.pc + brOffs, rjValue + jirlOffs)
-    io.brTarget := brTarget
 
     val srcRegIsRd = Wire(UInt(1.W))
     val src1IsPc = Wire(UInt(1.W))
@@ -175,9 +184,9 @@ class IDU extends Module {
     val rfRaddr2 = Wire(UInt(5.W))
     val rfRdata1 = Wire(UInt(dataBitWidth.W))
     val rfRdata2 = Wire(UInt(dataBitWidth.W))
-    val rfWe     = Wire(UInt(1.W))
-    val rfWaddr  = Wire(UInt(5.W))
-    val rfWdata  = Wire(UInt(dataBitWidth.W))
+    // val rfWe     = Wire(UInt(1.W))
+    // val rfWaddr  = Wire(UInt(5.W))
+    // val rfWdata  = Wire(UInt(dataBitWidth.W))
     
     rfRaddr1 := rj
     rfRaddr2 := Mux(srcRegIsRd === 1.U, rd, rk)
@@ -200,6 +209,21 @@ class IDU extends Module {
     val rjEqRd = Wire(UInt(1.W))
     rjEqRd := (rjValue === rkValue)
 
+    val brTaken = Wire(UInt(1.W))
+    brTaken := Mux((instBeq === 1.U && rjEqRd === 1.U) || (instBne === 1.U && (!rjEqRd) === 1.U) || (instJirl === 1.U) || (instBl === 1.U) || (instB === 1.U), 1.U, 0.U)
+    io.br.brTaken := brTaken
+
+    val brOffs = Wire(UInt(addrBitWidth.W))
+    brOffs := Mux(need_si26 === 1.U, Cat(Fill(4, i26(25)), i26(25, 0), 0.U(2.W)), 
+    Cat(Fill(14, i16(15)), i16(15, 0), 0.U(2.W))
+    )
+    val jirlOffs = Wire(UInt(addrBitWidth.W))
+
+    jirlOffs := Cat(Fill(14, i16(15)), i16(15, 0), 0.U(2.W))
+    val brTarget = Wire(UInt(dataBitWidth.W))
+    brTarget := Mux(instBeq === 1.U || instBne === 1.U || instBl === 1.U || instB === 1.U, io.in.pc + brOffs, rjValue + jirlOffs)
+    io.br.brTarget := brTarget
+
     val resFromMem = Wire(UInt(1.W))
     val dstIsR1 = Wire(UInt(1.W))
     val grWe = Wire(UInt(1.W))
@@ -213,47 +237,18 @@ class IDU extends Module {
 
     val aluSrc1 = Wire(UInt(dataBitWidth.W))
     val aluSrc2 = Wire(UInt(dataBitWidth.W))
-    val aluRes  = Wire(UInt(dataBitWidth.W))
+    //val aluRes  = Wire(UInt(dataBitWidth.W))
 
-    aluSrc1 := Mux(src1IsPc === 1.U, io.in.bits.pc(addrBitWidth - 1, 0), rjValue)
+    aluSrc1 := Mux(src1IsPc === 1.U, io.in.pc(addrBitWidth - 1, 0), rjValue)
     aluSrc2 := Mux(src2IsImm === 1.U, imm, rkValue)
-
-    io.out.bits.aluSrc1 := id_ex_aluSrc1
-    io.out.bits.aluSrc2 := id_ex_aluSrc2
-    io.out.bits.rfdata := id_ex_rfdata
-    io.out.bits.aluOp := id_ex_aluOp
-    io.out.bits.pc := id_ex_pc
-    io.out.bits.memWe := id_ex_resFromMem
-    io.out.bits.resFromMem := resFromMem
-    io.out.bits.grWe := id_ex_grWe
-    io.out.bits.dest := id_ex_dest
-
-    val dataReceived = RegInit(false.B)
-    when (io.in.valid && !dataReceived && reset === false.B){
-        id_ex_pc := io.in.bits.pc
-        id_ex_aluSrc1 := aluSrc1
-        id_ex_aluSrc2 := aluSrc2
-        id_ex_memWe := memWe
-        id_ex_aluOp := aluOp
-        id_ex_rfdata := rkValue
-        id_ex_resFromMem := resFromMem
-        id_ex_grWe := grWe
-        id_ex_dest := dest
-        dataReceived := true.B
-    }.elsewhen(io.out.ready && reset === false.B){
-        dataReceived := false.B
-    }
-
-    io.in.ready := !dataReceived && io.out.ready
-    io.out.valid := dataReceived && io.in.valid
     
-    io.out.bits.aluSrc1 := id_ex_aluSrc1
-    io.out.bits.aluSrc2 := id_ex_aluSrc2
-    io.out.bits.rfdata := id_ex_rfdata
-    io.out.bits.aluOp := id_ex_aluOp
-    io.out.bits.pc := id_ex_pc
-    io.out.bits.memWe := id_ex_resFromMem
-    io.out.bits.resFromMem := resFromMem
-    io.out.bits.grWe := id_ex_grWe
-    io.out.bits.dest := id_ex_dest
+    io.out.aluSrc1 := aluSrc1
+    io.out.aluSrc2 := aluSrc2
+    io.out.rfdata := rkValue
+    io.out.aluOp := aluOp
+    io.out.pc := if_id_pc
+    io.out.memWe := memWe
+    io.out.resFromMem := resFromMem
+    io.out.grWe := grWe
+    io.out.dest := dest
 }
