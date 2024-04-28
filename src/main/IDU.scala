@@ -221,7 +221,7 @@ class IDU extends Module {
 
     jirlOffs := Cat(Fill(14, i16(15)), i16(15, 0), 0.U(2.W))
     val brTarget = Wire(UInt(dataBitWidth.W))
-    brTarget := Mux(instBeq === 1.U || instBne === 1.U || instBl === 1.U || instB === 1.U, io.in.pc + brOffs, rjValue + jirlOffs)
+    brTarget := Mux(instBeq === 1.U || instBne === 1.U || instBl === 1.U || instB === 1.U, if_id_pc + brOffs, rjValue + jirlOffs)
     io.br.brTarget := brTarget
 
     val resFromMem = Wire(UInt(1.W))
@@ -239,7 +239,7 @@ class IDU extends Module {
     val aluSrc2 = Wire(UInt(dataBitWidth.W))
     //val aluRes  = Wire(UInt(dataBitWidth.W))
 
-    aluSrc1 := Mux(src1IsPc === 1.U, io.in.pc(addrBitWidth - 1, 0), rjValue)
+    aluSrc1 := Mux(src1IsPc === 1.U, if_id_pc(addrBitWidth - 1, 0), rjValue)
     aluSrc2 := Mux(src2IsImm === 1.U, imm, rkValue)
     
     io.out.aluSrc1 := aluSrc1
