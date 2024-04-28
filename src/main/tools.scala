@@ -54,14 +54,3 @@ class decoder6_64 extends Module {
 
   io.out := Cat(decoderOut.reverse)
 }
-/*
-class SignExtender(originalWidth: Int, extendedWidth: Int) extends Module {
-  require(originalWidth > 0 && extendedWidth > originalWidth, "Widths must be positive and extended width must be greater than original width")
-  val io = IO(new Bundle {
-    val original = Input(UInt(originalWidth.W))
-    val extended = Output(UInt(extendedWidth.W))
-  })
-  val paddingWidth = extendedWidth - originalWidth
-  val signExtended = Cat(Fill(paddingWidth, io.original(originalWidth - 1)), io.original)
-  io.extended := signExtended
-}*/

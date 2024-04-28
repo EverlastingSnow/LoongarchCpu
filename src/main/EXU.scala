@@ -1,0 +1,68 @@
+package loongarch32i
+
+import chisel3._
+import chisel3.util._
+import Myconsts._
+
+class ExuMessage extends Bundle {
+    val pc = Output(UInt(addrBitWidth.W))
+    val aluRes = Output(UInt(dataBitWidth.W))
+    val resFromMem = Output(UInt(1.W))
+    val grWe = Output(UInt(1.W))    
+    val dest = Output(UInt(5.W))
+    val valid = Output(Bool())
+    val rfdata = Output(UInt(dataBitWidth.W))
+    val memWe = Output(UInt(1.W))
+
+}
+class EXU extends Module{
+    val io = IO(new Bundle{
+        val in = Flipped(new IduMessage())    
+        //val data = new data_info()
+        val out = new ExuMessage()
+        val exu_allowin = Output(Bool())
+        val mem_allowin = Input(Bool())
+    })
+    val exu_ready_go = true.B 
+    val exu_valid = RegInit(false.B)
+    val exu_allowin = (~exu_valid) || (io.mem_allowin && exu_ready_go)
+    when(exu_allowin) {exu_valid := io.in.valid}
+    io.out.valid := exu_ready_go && exu_valid
+    io.exu_allowin := exu_allowin
+
+    val id_ex_pc = RegInit(0.U(addrBitWidth.W))
+    val id_ex_aluSrc1 = RegInit(0.U(dataBitWidth.W))
+    val id_ex_aluSrc2 = RegInit(0.U(dataBitWidth.W))
+    val id_ex_memWe = RegInit(0.U(1.W))
+    val id_ex_aluOp = RegInit(0.U(12.W))
+    val id_ex_rfdata = RegInit(0.U(dataBitWidth.W))
+    val id_ex_resFromMem = RegInit(0.U(1.W))
+    val id_ex_grWe = RegInit(0.U(1.W))
+    val id_ex_dest = RegInit(0.U(5.W))
+    when(exu_allowin && io.in.valid){
+        id_ex_pc := io.in.pc
+        id_ex_aluSrc1 := io.in.aluSrc1
+        id_ex_aluSrc2 := io.in.aluSrc2
+        id_ex_memWe := io.in.memWe
+        id_ex_aluOp := io.in.aluOp
+        id_ex_rfdata := io.in.rfdata
+        id_ex_resFromMem := io.in.resFromMem
+        id_ex_grWe := io.in.grWe
+        id_ex_dest := io.in.dest 
+    }
+
+    val u_alu = Module(new alu)
+
+    u_alu.io.aluOp := id_ex_aluOp
+    u_alu.io.aluSrc1 := id_ex_aluSrc1
+    u_alu.io.aluSrc2 := id_ex_aluSrc2
+
+    io.out.aluRes := u_alu.io.aluRes
+    io.out.resFromMem := id_ex_resFromMem
+    io.out.grWe := id_ex_grWe
+    io.out.dest := id_ex_dest
+    io.out.pc := id_ex_pc
+    io.out.memWe := id_ex_memWe
+    io.out.rfdata := id_ex_rfdata
+
+}
