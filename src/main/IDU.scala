@@ -40,15 +40,6 @@ class IDU extends Module {
     when (idu_allowin && io.in.valid){
         if_id_inst := io.in.inst
         if_id_pc := io.in.pc
-        // id_ex_pc := io.in.pc
-        // id_ex_aluSrc1 := aluSrc1
-        // id_ex_aluSrc2 := aluSrc2
-        // id_ex_memWe := memWe
-        // id_ex_aluOp := aluOp
-        // id_ex_rfdata := rkValue
-        // id_ex_resFromMem := resFromMem
-        // id_ex_grWe := grWe
-        // id_ex_dest := dest 
     }
     
     val inst = Wire(UInt(addrBitWidth.W))
@@ -89,16 +80,6 @@ class IDU extends Module {
     val instBeq = Wire(UInt(1.W))
     val instBne = Wire(UInt(1.W))
     val instLu12iW = Wire(UInt(1.W))
-
-    // val id_ex_pc = RegInit(0.U(addrBitWidth.W))
-    // val id_ex_aluSrc1 = RegInit(0.U(dataBitWidth.W))
-    // val id_ex_aluSrc2 = RegInit(0.U(dataBitWidth.W))
-    // val id_ex_memWe = RegInit(0.U(1.W))
-    // val id_ex_aluOp = RegInit(0.U(12.W))
-    // val id_ex_rfdata = RegInit(0.U(dataBitWidth.W))
-    // val id_ex_resFromMem = RegInit(0.U(1.W))
-    // val id_ex_grWe = RegInit(0.U(1.W))
-    // val id_ex_dest = RegInit(0.U(5.W))
 
     op31_26 := inst(31, 26)
     op25_22 := inst(25, 22)
