@@ -20,19 +20,14 @@ class MEM extends Module {
         val mem_allowin = Output(Bool())
         val wbu_allowin = Input(Bool())
     })
-
-    // val mem_wb_pc = Reg(UInt(addrBitWidth.W))
-    // val mem_wb_grWe = Reg(UInt(1.W))
-    // val mem_wb_dest = Reg(UInt(5.W))
-    // val mem_wb_finalRes = Reg(UInt(dataBitWidth.W))   
-    val ex_me_pc = Reg(UInt(addrBitWidth.W))
-    val ex_me_aluRes = Reg(UInt(dataBitWidth.W))
-    val ex_me_resFromMem = Reg(UInt(1.W))
-    val ex_me_grWe = Reg(UInt(1.W))
-    val ex_me_dest = Reg(UInt(5.W)) 
-    val ex_me_rfdata = Reg(UInt(dataBitWidth.W))
-    val ex_me_memWe = Reg(UInt(1.W))
-    //val valid = RegInit(false.B)
+    
+    val ex_me_pc = RegInit(0.U(addrBitWidth.W))
+    val ex_me_aluRes = RegInit(0.U(dataBitWidth.W))
+    val ex_me_resFromMem = RegInit(0.U(1.W))
+    val ex_me_grWe = RegInit(0.U(1.W))
+    val ex_me_dest = RegInit(0.U(5.W)) 
+    val ex_me_rfdata = RegInit(0.U(dataBitWidth.W))
+    val ex_me_memWe = RegInit(0.U(1.W))
 
     val mem_ready_go = true.B 
     val mem_valid = RegInit(false.B)
@@ -41,10 +36,6 @@ class MEM extends Module {
     io.out.valid := mem_ready_go && mem_valid
     io.mem_allowin := mem_allowin
     when (mem_allowin && io.in.valid){
-        // mem_wb_finalRes := Mux(io.in.resFromMem === 1.U, io.data_sram_rdata, io.in.aluRes)
-        // mem_wb_grWe := io.in.grWe
-        // mem_wb_dest := io.in.dest
-        // mem_wb_pc := io.in.pc
         ex_me_pc := io.in.pc
         ex_me_aluRes := io.in.aluRes
         ex_me_resFromMem := io.in.resFromMem

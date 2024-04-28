@@ -27,8 +27,8 @@ class IDU extends Module {
         val idu_allowin = Output(Bool())
         val exu_allowin = Input(Bool())
     })
-    val if_id_inst = Reg(UInt(instBitWidth.W))
-    val if_id_pc = Reg(UInt(addrBitWidth.W))
+    val if_id_inst = RegInit(0.U(instBitWidth.W))
+    val if_id_pc = RegInit(0.U(addrBitWidth.W))
     
     val idu_ready_go = true.B 
     val idu_valid = RegInit(false.B)
@@ -90,15 +90,15 @@ class IDU extends Module {
     val instBne = Wire(UInt(1.W))
     val instLu12iW = Wire(UInt(1.W))
 
-    // val id_ex_pc = Reg(UInt(addrBitWidth.W))
-    // val id_ex_aluSrc1 = Reg(UInt(dataBitWidth.W))
-    // val id_ex_aluSrc2 = Reg(UInt(dataBitWidth.W))
-    // val id_ex_memWe = Reg(UInt(1.W))
-    // val id_ex_aluOp = Reg(UInt(12.W))
-    // val id_ex_rfdata = Reg(UInt(dataBitWidth.W))
-    // val id_ex_resFromMem = Reg(UInt(1.W))
-    // val id_ex_grWe = Reg(UInt(1.W))
-    // val id_ex_dest = Reg(UInt(5.W))
+    // val id_ex_pc = RegInit(0.U(addrBitWidth.W))
+    // val id_ex_aluSrc1 = RegInit(0.U(dataBitWidth.W))
+    // val id_ex_aluSrc2 = RegInit(0.U(dataBitWidth.W))
+    // val id_ex_memWe = RegInit(0.U(1.W))
+    // val id_ex_aluOp = RegInit(0.U(12.W))
+    // val id_ex_rfdata = RegInit(0.U(dataBitWidth.W))
+    // val id_ex_resFromMem = RegInit(0.U(1.W))
+    // val id_ex_grWe = RegInit(0.U(1.W))
+    // val id_ex_dest = RegInit(0.U(5.W))
 
     op31_26 := inst(31, 26)
     op25_22 := inst(25, 22)
@@ -184,9 +184,6 @@ class IDU extends Module {
     val rfRaddr2 = Wire(UInt(5.W))
     val rfRdata1 = Wire(UInt(dataBitWidth.W))
     val rfRdata2 = Wire(UInt(dataBitWidth.W))
-    // val rfWe     = Wire(UInt(1.W))
-    // val rfWaddr  = Wire(UInt(5.W))
-    // val rfWdata  = Wire(UInt(dataBitWidth.W))
     
     rfRaddr1 := rj
     rfRaddr2 := Mux(srcRegIsRd === 1.U, rd, rk)
@@ -237,7 +234,6 @@ class IDU extends Module {
 
     val aluSrc1 = Wire(UInt(dataBitWidth.W))
     val aluSrc2 = Wire(UInt(dataBitWidth.W))
-    //val aluRes  = Wire(UInt(dataBitWidth.W))
 
     aluSrc1 := Mux(src1IsPc === 1.U, if_id_pc(addrBitWidth - 1, 0), rjValue)
     aluSrc2 := Mux(src2IsImm === 1.U, imm, rkValue)

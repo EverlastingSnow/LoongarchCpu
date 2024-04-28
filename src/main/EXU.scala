@@ -23,12 +23,6 @@ class EXU extends Module{
         val exu_allowin = Output(Bool())
         val mem_allowin = Input(Bool())
     })
-
-    // val ex_me_pc = Reg(UInt(addrBitWidth.W))
-    // val ex_me_aluRes = Reg(UInt(dataBitWidth.W))
-    // val ex_me_resFromMem = Reg(UInt(1.W))
-    // val ex_me_grWe = Reg(UInt(1.W))
-    // val ex_me_dest = Reg(UInt(5.W))
     val exu_ready_go = true.B 
     val exu_valid = RegInit(false.B)
     val exu_allowin = (~exu_valid) || (io.mem_allowin && exu_ready_go)
@@ -36,21 +30,16 @@ class EXU extends Module{
     io.out.valid := exu_ready_go && exu_valid
     io.exu_allowin := exu_allowin
 
-    val id_ex_pc = Reg(UInt(addrBitWidth.W))
-    val id_ex_aluSrc1 = Reg(UInt(dataBitWidth.W))
-    val id_ex_aluSrc2 = Reg(UInt(dataBitWidth.W))
-    val id_ex_memWe = Reg(UInt(1.W))
-    val id_ex_aluOp = Reg(UInt(12.W))
-    val id_ex_rfdata = Reg(UInt(dataBitWidth.W))
-    val id_ex_resFromMem = Reg(UInt(1.W))
-    val id_ex_grWe = Reg(UInt(1.W))
-    val id_ex_dest = Reg(UInt(5.W))
+    val id_ex_pc = RegInit(0.U(addrBitWidth.W))
+    val id_ex_aluSrc1 = RegInit(0.U(dataBitWidth.W))
+    val id_ex_aluSrc2 = RegInit(0.U(dataBitWidth.W))
+    val id_ex_memWe = RegInit(0.U(1.W))
+    val id_ex_aluOp = RegInit(0.U(12.W))
+    val id_ex_rfdata = RegInit(0.U(dataBitWidth.W))
+    val id_ex_resFromMem = RegInit(0.U(1.W))
+    val id_ex_grWe = RegInit(0.U(1.W))
+    val id_ex_dest = RegInit(0.U(5.W))
     when(exu_allowin && io.in.valid){
-        // ex_me_pc := io.in.pc
-        // ex_me_aluRes := u_alu.io.aluRes
-        // ex_me_resFromMem := io.in.resFromMem
-        // ex_me_grWe := io.in.grWe
-        // ex_me_dest := io.in.dest
         id_ex_pc := io.in.pc
         id_ex_aluSrc1 := io.in.aluSrc1
         id_ex_aluSrc2 := io.in.aluSrc2
@@ -76,8 +65,4 @@ class EXU extends Module{
     io.out.memWe := id_ex_memWe
     io.out.rfdata := id_ex_rfdata
 
-    // io.data.data_sram_en := 1.U 
-    // io.data.data_sram_we := Mux((io.in.memWe === 1.U && io.out.valid), Fill(4, 1.U), Fill(4, 0.U))
-    // io.data.data_sram_addr := u_alu.io.aluRes
-    // io.data.data_sram_wdata := io.in.rfdata
 }

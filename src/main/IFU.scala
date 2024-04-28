@@ -32,23 +32,16 @@ class IFU extends Module {
     snPc := pc + "h4".U;
     dnPc := Mux(io.br.brTaken === 1.U, io.br.brTarget, snPc)
 
-    // val if_id_inst = Reg(UInt(instBitWidth.W))
-    // val if_id_pc = Reg(UInt(addrBitWidth.W))
         
     when(reset.asBool === true.B){
         pc := "h1bfffffc".U(addrBitWidth.W)
     }
     when(to_ifu_valid && ifu_allowin){
-        // if_id_inst := io.in.inst_sram_rdata
-        // if_id_pc := dnPc
         pc := dnPc
     }
 
     
-    //io.out.ready := !io.out.valid || (io.out.valid & io.in.ready)
-
     io.inst.inst_sram_en := to_ifu_valid && ifu_allowin
-    //io.inst.inst_sram_en := 1.U
     io.inst.inst_sram_we := Fill(4, 0.U)
     io.inst.inst_sram_addr := dnPc
     io.inst.inst_sram_wdata := Fill(32, 0.U)

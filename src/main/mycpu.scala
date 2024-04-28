@@ -34,30 +34,14 @@ class mycpu extends Module {
     mem.io.wbu_allowin <> wbu.io.wbu_allowin
 
     ifu.io.inst <> io.inst
-    // io.inst_sram_en := ifu.io.inst_sram_en
-    // io.inst_sram_we := ifu.io.inst_sram_we
-    // io.inst_sram_addr := ifu.io.inst_sram_addr
-    // io.inst_sram_wdata := ifu.io.inst_sram_wdata
     ifu.io.br <> idu.io.br
-    // ifu.io.brTaken := idu.io.brTaken
-    // ifu.io.brTarget := idu.io.brTarget
 
     idu.io.rfWe := wbu.io.rfWe
     idu.io.rfWaddr := wbu.io.rfWaddr
     idu.io.rfWdata := wbu.io.rfWdata
 
     mem.io.data <> io.data
-    // io.data_sram_en := exu.io.data_sram_en
-    // io.data_sram_we := exu.io.data_sram_we
-    // io.data_sram_addr := exu.io.data_sram_addr
-    // io.data_sram_wdata := exu.io.data_sram_wdata
-
-    //mem.io.data_sram_rdata := io.data_sram_rdata
 
     wbu.io.debug <> io.debug
     wbu.io.data_sram_rdata <> io.data.data_sram_rdata
-    // io.debug_wb_pc := wbu.io.debug_wb_pc
-    // io.debug_wb_rf_we := wbu.io.debug_wb_rf_we
-    // io.debug_wb_rf_wnum := wbu.io.debug_wb_rf_wnum
-    // io.debug_wb_rf_wdata := wbu.io.debug_wb_rf_wdata
 }
