@@ -17,7 +17,8 @@ class IFU extends Module {
         val idu_allowin = Input(Bool())
     })
 
-    val to_ifu_valid = (reset.asBool === false.B)
+    val to_ifu_valid = RegNext(!reset.asBool) & !reset.asBool
+    //val to_ifu_valid = (reset.asBool === false.B)
     val ifu_ready_go = true.B 
     val ifu_valid = RegInit(false.B)
     val ifu_allowin = (~ifu_valid) || (io.idu_allowin && ifu_ready_go)
