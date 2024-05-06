@@ -27,18 +27,18 @@ class alu extends Module {
     val opSra = Wire(UInt(1.W))
     val opLui = Wire(UInt(1.W))
 
-    opAdd := io.aluOp(11)
-    opSub := io.aluOp(10)
-    opSlt := io.aluOp(9)
-    opSltu := io.aluOp(8)
-    opAnd := io.aluOp(7)
-    opNor := io.aluOp(6)
-    opOr := io.aluOp(5)
-    opXor := io.aluOp(4)
-    opSll := io.aluOp(3)
-    opSrl := io.aluOp(2)
-    opSra := io.aluOp(1)
-    opLui := io.aluOp(0)
+    opAdd := io.aluOp === 1.U
+    opSub := io.aluOp === 2.U
+    opSlt := io.aluOp === 3.U
+    opSltu := io.aluOp === 4.U
+    opAnd := io.aluOp === 5.U
+    opNor := io.aluOp === 6.U
+    opOr := io.aluOp === 7.U
+    opXor := io.aluOp === 8.U
+    opSll := io.aluOp === 9.U
+    opSrl := io.aluOp === 10.U
+    opSra := io.aluOp === 11.U
+    opLui := io.aluOp === 12.U
 
     val addSubRes = Wire(UInt(dataBitWidth.W))
     val sltRes = Wire(UInt(dataBitWidth.W))
@@ -84,7 +84,19 @@ class alu extends Module {
     sr64Res := Cat(Fill(32, (opSra & io.aluSrc1(31))), io.aluSrc1(31, 0)) >> io.aluSrc2(4, 0) //QUESTION
 
     srRes := sr64Res(31, 0)
-
+    io.aluRes := MuxCase(0.U, Seq(
+        ((opAdd | opSub) === 1.U) -> addSubRes,
+        (opSlt === 1.U) -> sltRes,
+        (opSltu === 1.U) -> sltuRes,
+        (opAnd === 1.U) -> andRes,
+        (opNor === 1.U) -> norRes,
+        (opOr === 1.U) -> orRes,
+        (opXor === 1.U) -> xorRes,
+        (opLui === 1.U) -> luiRes,
+        (opSll === 1.U) -> sllRes,
+        ((opSra | opSrl) === 1.U) -> srRes
+    ))
+/*
     io.aluRes := (Fill(dataBitWidth, (opAdd | opSub)) & addSubRes) |
                  (Fill(dataBitWidth, opSlt)             & sltRes)    |
                  (Fill(dataBitWidth, opSltu)            & sltuRes)   |
@@ -95,5 +107,5 @@ class alu extends Module {
                  (Fill(dataBitWidth, opLui)             & luiRes)    |
                  (Fill(dataBitWidth, opSll)             & sllRes)    |
                  (Fill(dataBitWidth, (opSrl | opSra))   & srRes)
-
+*/
 }

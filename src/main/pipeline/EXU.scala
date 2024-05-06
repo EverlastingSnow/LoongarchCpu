@@ -34,7 +34,7 @@ class EXU extends Module{
     val id_ex_aluSrc1 = RegInit(0.U(dataBitWidth.W))
     val id_ex_aluSrc2 = RegInit(0.U(dataBitWidth.W))
     val id_ex_memWe = RegInit(0.U(1.W))
-    val id_ex_aluOp = RegInit(0.U(12.W))
+    val id_ex_aluOp = RegInit(0.U(aluOpLen.W))
     val id_ex_rfdata = RegInit(0.U(dataBitWidth.W))
     val id_ex_resFromMem = RegInit(0.U(1.W))
     val id_ex_grWe = RegInit(0.U(1.W))
