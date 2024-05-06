@@ -13,6 +13,8 @@ class WBU extends Module {
         val rfWdata = Output(UInt(dataBitWidth.W))
         val wbu_allowin = Output(Bool())
         val data_sram_rdata = Input(UInt(dataBitWidth.W))
+        val wbu_w_valid = Output(UInt(1.W))
+        val wbu_waddr = Output(UInt(5.W))
     })
     
     val wbu_ready_go = true.B 
@@ -43,12 +45,15 @@ class WBU extends Module {
     rfWaddr := mem_wb_dest
     rfWdata := finalRes
 
-    io.rfWe := rfWe
+    io.rfWe := rfWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt
     io.rfWaddr := rfWaddr
     io.rfWdata := rfWdata
+
+    io.wbu_w_valid := rfWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt
+    io.wbu_waddr := rfWaddr
     
     io.debug.debug_wb_pc := mem_wb_pc
-    io.debug.debug_wb_rf_we := Fill(4, rfWe)
+    io.debug.debug_wb_rf_we := Fill(4, rfWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt)
     io.debug.debug_wb_rf_wnum := mem_wb_dest
     io.debug.debug_wb_rf_wdata := finalRes
 }

@@ -19,6 +19,8 @@ class MEM extends Module {
         val out = new MemMessage()
         val mem_allowin = Output(Bool())
         val wbu_allowin = Input(Bool())
+        val mem_w_valid = Output(UInt(1.W))
+        val mem_waddr = Output(UInt(5.W))
     })
     
     val ex_me_pc = RegInit(0.U(addrBitWidth.W))
@@ -46,9 +48,12 @@ class MEM extends Module {
     }
 
     io.data.data_sram_en := 1.U 
-    io.data.data_sram_we := Mux(ex_me_memWe === 1.U, Fill(4, 1.U), Fill(4, 0.U))
+    io.data.data_sram_we := Mux(ex_me_memWe === 1.U && mem_valid, Fill(4, 1.U), Fill(4, 0.U))
     io.data.data_sram_addr := ex_me_aluRes
     io.data.data_sram_wdata := ex_me_rfdata
+
+    io.mem_w_valid := ex_me_grWe & mem_valid & (ex_me_dest =/= 0.U).asUInt    
+    io.mem_waddr := ex_me_dest
 
     io.out.aluRes := ex_me_aluRes
     io.out.grWe := ex_me_grWe

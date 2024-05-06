@@ -22,6 +22,7 @@ object Myconsts{
     val aluSraiw  = 11.U(aluOpLen.W)
     val aluLu12iw = 12.U(aluOpLen.W)
     val imm_NOP = 0.U
+    val rNOP = 0.U
 /*
     val immLen = 3
     val immNop   = 0.U(immLen)

@@ -13,7 +13,6 @@ class ExuMessage extends Bundle {
     val valid = Output(Bool())
     val rfdata = Output(UInt(dataBitWidth.W))
     val memWe = Output(UInt(1.W))
-
 }
 class EXU extends Module{
     val io = IO(new Bundle{
@@ -22,6 +21,8 @@ class EXU extends Module{
         val out = new ExuMessage()
         val exu_allowin = Output(Bool())
         val mem_allowin = Input(Bool())
+        val exu_w_valid = Output(UInt(1.W))
+        val exu_waddr = Output(UInt(5.W))
     })
     val exu_ready_go = true.B 
     val exu_valid = RegInit(false.B)
@@ -56,6 +57,9 @@ class EXU extends Module{
     u_alu.io.aluOp := id_ex_aluOp
     u_alu.io.aluSrc1 := id_ex_aluSrc1
     u_alu.io.aluSrc2 := id_ex_aluSrc2
+
+    io.exu_w_valid := id_ex_grWe & exu_valid & (id_ex_dest =/= 0.U).asUInt
+    io.exu_waddr := id_ex_dest
 
     io.out.aluRes := u_alu.io.aluRes
     io.out.resFromMem := id_ex_resFromMem

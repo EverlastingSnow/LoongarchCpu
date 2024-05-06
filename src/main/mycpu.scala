@@ -33,6 +33,13 @@ class mycpu extends Module {
     exu.io.mem_allowin <> mem.io.mem_allowin
     mem.io.wbu_allowin <> wbu.io.wbu_allowin
 
+    idu.io.exu_w_valid <> exu.io.exu_w_valid
+    idu.io.exu_waddr <> exu.io.exu_waddr
+    idu.io.mem_w_valid <> mem.io.mem_w_valid
+    idu.io.mem_waddr <> mem.io.mem_waddr
+    idu.io.wbu_w_valid <> wbu.io.wbu_w_valid
+    idu.io.wbu_waddr <> wbu.io.wbu_waddr
+
     ifu.io.inst <> io.inst
     ifu.io.br <> idu.io.br
 
