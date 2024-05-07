@@ -12,9 +12,8 @@ class WBU extends Module {
         val rfWaddr = Output(UInt(5.W))
         val rfWdata = Output(UInt(dataBitWidth.W))
         val wbu_allowin = Output(Bool())
-        val data_sram_rdata = Input(UInt(dataBitWidth.W))
-        val wbu_w_valid = Output(UInt(1.W))
-        val wbu_waddr = Output(UInt(5.W))
+        // val data_sram_rdata = Input(UInt(dataBitWidth.W))
+        val foward = new foward_info()
     })
     
     val wbu_ready_go = true.B 
@@ -36,8 +35,9 @@ class WBU extends Module {
         mem_wb_pc := io.in.pc
     }
     val finalRes = Wire(UInt(dataBitWidth.W))
-    finalRes := Mux(mem_wb_resFromMem === 1.U, 
-    io.data_sram_rdata, mem_wb_aluRes)
+    // finalRes := Mux(mem_wb_resFromMem === 1.U, 
+    // io.data_sram_rdata, mem_wb_aluRes)
+    finalRes := mem_wb_aluRes
     val rfWe = Wire(UInt(1.W))
     val rfWaddr = Wire(UInt(5.W))
     val rfWdata = Wire(UInt(dataBitWidth.W))
@@ -49,9 +49,13 @@ class WBU extends Module {
     io.rfWaddr := rfWaddr
     io.rfWdata := rfWdata
 
+    io.foward.w_valid := mem_wb_grWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt
+    io.foward.waddr := mem_wb_dest
+    io.foward.wdata := rfWdata
+/*
     io.wbu_w_valid := rfWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt
     io.wbu_waddr := rfWaddr
-    
+*/    
     io.debug.debug_wb_pc := mem_wb_pc
     io.debug.debug_wb_rf_we := Fill(4, rfWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt)
     io.debug.debug_wb_rf_wnum := mem_wb_dest

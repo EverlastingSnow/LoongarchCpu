@@ -17,12 +17,12 @@ class ExuMessage extends Bundle {
 class EXU extends Module{
     val io = IO(new Bundle{
         val in = Flipped(new IduMessage())    
-        //val data = new data_info()
+        val data = new data_info()
         val out = new ExuMessage()
         val exu_allowin = Output(Bool())
         val mem_allowin = Input(Bool())
-        val exu_w_valid = Output(UInt(1.W))
-        val exu_waddr = Output(UInt(5.W))
+        val choke = new choke_info()
+        val foward = new foward_info()
     })
     val exu_ready_go = true.B 
     val exu_valid = RegInit(false.B)
@@ -58,8 +58,17 @@ class EXU extends Module{
     u_alu.io.aluSrc1 := id_ex_aluSrc1
     u_alu.io.aluSrc2 := id_ex_aluSrc2
 
-    io.exu_w_valid := id_ex_grWe & exu_valid & (id_ex_dest =/= 0.U).asUInt
-    io.exu_waddr := id_ex_dest
+    io.choke.w_valid := id_ex_grWe & exu_valid & (id_ex_dest =/= 0.U).asUInt & id_ex_resFromMem
+    io.choke.waddr := id_ex_dest
+
+    io.foward.w_valid := id_ex_grWe & exu_valid & (id_ex_dest =/= 0.U).asUInt & !(id_ex_resFromMem)
+    io.foward.waddr := id_ex_dest
+    io.foward.wdata := u_alu.io.aluRes
+
+    io.data.data_sram_en := 1.U 
+    io.data.data_sram_we := Mux(id_ex_memWe === 1.U && exu_valid, Fill(4, 1.U), Fill(4, 0.U))
+    io.data.data_sram_addr := u_alu.io.aluRes
+    io.data.data_sram_wdata := id_ex_rfdata
 
     io.out.aluRes := u_alu.io.aluRes
     io.out.resFromMem := id_ex_resFromMem

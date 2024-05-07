@@ -28,3 +28,12 @@ class br_info extends Bundle{
     val brTaken = Input(UInt(1.W))
     val brTarget = Input(UInt(32.W))
 }
+class choke_info extends Bundle{
+    val w_valid = Output(UInt(1.W))
+    val waddr   = Output(UInt(5.W))
+}
+class foward_info extends Bundle{
+    val w_valid = Output(UInt(1.W))
+    val waddr   = Output(UInt(5.W))
+    val wdata   = Output(UInt(dataBitWidth.W))
+}

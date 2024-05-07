@@ -23,6 +23,22 @@ object Myconsts{
     val aluLu12iw = 12.U(aluOpLen.W)
     val imm_NOP = 0.U
     val rNOP = 0.U
+
+    val READ_NOP = 0.U
+    val READ_ME  = 1.U
+
+    val WR_NOP = 0.U
+
+    val WR_ME  = 1.U
+    val WR_RG  = 1.U
+
+    val R1 = 1.U(5.W)
+
+    val JUMP_NOP = 0.U
+    val JUMP_NORMAL = 1.U
+    val JUMP_EQ = 2.U
+    val JUMP_NEQ = 3.U
+
 /*
     val immLen = 3
     val immNop   = 0.U(immLen)
