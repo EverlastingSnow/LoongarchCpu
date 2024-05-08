@@ -80,6 +80,7 @@ class IDU extends Module {
     i26 := Cat(inst(9, 0), inst(25, 10))
     val imm_4 = 4.U(dataBitWidth.W)
     val imm_si12 = Cat(Fill(20, i12(11)), i12(11, 0))
+    val imm_ui12 = Cat(Fill(20, 0.U), i12(11, 0))
     val imm_si16 = Cat(Fill(14, i16(15)), i16(15, 0), 0.U(2.W))
     val imm_si20 = Cat(i20(19, 0), 0.U(12.W))
     val imm_si26 = Cat(Fill(4, i26(25)), i26(25, 0), 0.U(2.W))
@@ -105,30 +106,49 @@ class IDU extends Module {
     val rjValue = Wire(UInt(dataBitWidth.W))
     val rkValue = Wire(UInt(dataBitWidth.W))
 
+    val rk_5 = Wire(UInt(dataBitWidth.W))
+    rk_5 := rkValue(4, 0)
+
     val idu_signals: List[UInt] = ListLookup(
         inst,
         List(aluNop, 0.U, 0.U, rNOP, rNOP, imm_NOP, READ_NOP, WR_NOP, 0.U, 0.U, 0.U),
         Array(
             instAdd_w    -> List(aluAdd   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instSub_w    -> List(aluSub   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instMul_w    -> List(aluMul   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instMul_h_w  -> List(aluMulh  , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instMul_h_w_u-> List(aluMulhu , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instDiv_w    -> List(aluDiv   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instMod_w    -> List(aluMod   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instDiv_w_u  -> List(aluDivu  , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instMod_w_u  -> List(aluModu  , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instAddi_w   -> List(aluAdd   , rjValue, imm_si12, rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instLd_w     -> List(aluAdd   , rjValue, imm_si12, rj,   rNOP, imm_NOP,  READ_ME,   WR_RG,   WR_NOP, rd, JUMP_NOP),
             instSt_w     -> List(aluAdd   , rjValue, imm_si12, rj,   rd,   imm_NOP,  READ_NOP,  WR_NOP,  WR_ME,  rd, JUMP_NOP),
             instJirl     -> List(aluAdd   , pc     , imm_4,    rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NORMAL),
             instBl       -> List(aluAdd   , pc     , imm_4,    rNOP, rNOP, imm_si26, READ_NOP,  WR_RG,   WR_NOP, R1, JUMP_NORMAL),
-            instSub_w    -> List(aluSub   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instSlt      -> List(aluSlt   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instSltu     -> List(aluSltu  , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instSlti     -> List(aluSlt   , rjValue, imm_si12, rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instSltui    -> List(aluSltu  , rjValue, imm_si12, rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP), 
             instNor      -> List(aluNor   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instAnd      -> List(aluAnd   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instOr       -> List(aluOr    , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instXor      -> List(aluXor   , rjValue, rkValue,  rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instAndi     -> List(aluAnd   , rjValue, imm_ui12, rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),            
+            instOri      -> List(aluOr    , rjValue, imm_ui12, rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instXori     -> List(aluXor   , rjValue, imm_ui12, rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instSll_w    -> List(aluSlliw , rjValue, rk_5,     rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instSrl_w    -> List(aluSrliw , rjValue, rk_5,     rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
+            instSra_w    -> List(aluSraiw , rjValue, rk_5,     rj,   rk,   imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instSlli_w   -> List(aluSlliw , rjValue, imm_ui5,  rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instSrli_w   -> List(aluSrliw , rjValue, imm_ui5,  rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instSrai_w   -> List(aluSraiw , rjValue, imm_ui5,  rj,   rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instLu12i_w  -> List(aluLu12iw, rjValue, imm_si20, rNOP, rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP),
             instB        -> List(aluNop   , rjValue, rkValue,  rNOP, rNOP, imm_si26, READ_NOP,  WR_NOP,  WR_NOP, rd, JUMP_NORMAL),
             instBeq      -> List(aluNop   , rjValue, rkValue,  rj,   rd,   imm_si16, READ_NOP,  WR_NOP,  WR_NOP, rd, JUMP_EQ),
-            instBne      -> List(aluNop   , rjValue, rkValue,  rj,   rd,   imm_si16, READ_NOP,  WR_NOP,  WR_NOP, rd, JUMP_NEQ)
+            instBne      -> List(aluNop   , rjValue, rkValue,  rj,   rd,   imm_si16, READ_NOP,  WR_NOP,  WR_NOP, rd, JUMP_NEQ),
+            instPcaddu12i-> List(aluAdd   , pc,      imm_si20, rNOP, rNOP, imm_NOP,  READ_NOP,  WR_RG,   WR_NOP, rd, JUMP_NOP)
         )
     )
     val aluOp :: aluSrc1 :: aluSrc2 :: raddr1 :: raddr2 :: brOffs :: resFromMem :: grWe :: memWe :: dest :: jump :: Nil = idu_signals
