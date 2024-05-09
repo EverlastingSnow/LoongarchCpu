@@ -24,7 +24,7 @@ class EXU extends Module{
         val choke = new choke_info()
         val foward = new foward_info()
     })
-    val exu_ready_go = true.B 
+    val exu_ready_go = Wire(Bool()) 
     val exu_valid = RegInit(false.B)
     val exu_allowin = (~exu_valid) || (io.mem_allowin && exu_ready_go)
     when(exu_allowin) {exu_valid := io.in.valid}
@@ -57,6 +57,8 @@ class EXU extends Module{
     u_alu.io.aluOp := id_ex_aluOp
     u_alu.io.aluSrc1 := id_ex_aluSrc1
     u_alu.io.aluSrc2 := id_ex_aluSrc2
+
+    exu_ready_go := u_alu.io.aluReady
 
     io.choke.w_valid := id_ex_grWe & exu_valid & (id_ex_dest =/= 0.U).asUInt & id_ex_resFromMem
     io.choke.waddr := id_ex_dest

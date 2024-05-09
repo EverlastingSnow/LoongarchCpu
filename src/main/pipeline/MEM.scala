@@ -15,13 +15,10 @@ class MemMessage extends Bundle {
 class MEM extends Module {
     val io = IO(new Bundle{
         val in = Flipped(new ExuMessage())
-        //val data = new data_info()
         val out = new MemMessage()
         val mem_allowin = Output(Bool())
         val wbu_allowin = Input(Bool())
         val data_sram_rdata = Input(UInt(dataBitWidth.W))
-        /*val mem_w_valid = Output(UInt(1.W))
-        val mem_waddr = Output(UInt(5.W))*/
         val foward = new foward_info()
     })
     
@@ -49,14 +46,6 @@ class MEM extends Module {
         ex_me_memWe := io.in.memWe
     }
 
-    // io.data.data_sram_en := 1.U 
-    // io.data.data_sram_we := Mux(ex_me_memWe === 1.U && mem_valid, Fill(4, 1.U), Fill(4, 0.U))
-    // io.data.data_sram_addr := ex_me_aluRes
-    // io.data.data_sram_wdata := ex_me_rfdata
-/*
-    io.mem_w_valid := ex_me_grWe & mem_valid & (ex_me_dest =/= 0.U).asUInt    
-    io.mem_waddr := ex_me_dest
-*/
     val finalRes = Wire(UInt(dataBitWidth.W))
     finalRes := Mux(ex_me_resFromMem === 1.U, io.data_sram_rdata, ex_me_aluRes)
 

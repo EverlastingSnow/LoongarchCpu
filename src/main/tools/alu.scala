@@ -9,6 +9,7 @@ class aluIo extends Bundle {
     val aluSrc1 = Input(UInt(dataBitWidth.W))
     val aluSrc2 = Input(UInt(dataBitWidth.W))
     val aluRes = Output(UInt(dataBitWidth.W))
+    val aluReady = Output(Bool())
 }
 
 class alu extends Module {
@@ -73,25 +74,25 @@ class alu extends Module {
     val adderRes = WireInit(0.U(dataBitWidth.W))
     val adderCout = WireInit(0.U(1.W))
 
-    // val op1s = WireInit(0.U((dataBitWidth + 1).W))
-    // val op2s = WireInit(0.U((dataBitWidth + 1).W))
-    val MulResS = WireInit(0.U((2 * (dataBitWidth)).W))
-    
-    // val op1u = WireInit(0.U((dataBitWidth + 1).W))
-    // val op2u = WireInit(0.U((dataBitWidth + 1).W))
-    val MulResU = WireInit(0.U((2 * (dataBitWidth)).W))
+    val mulRes = WireInit(0.U(hiLoBitWidth.W))
+
     val quotient  = WireInit(0.U(dataBitWidth.W))
     val remainder = WireInit(0.U(dataBitWidth.W))
     
-    // val dividedS = WireInit(0.U((dataBitWidth + 1).W))
-    // val divisorS = WireInit(0.U((dataBitWidth + 1).W))
-    // val quotientS = WireInit(0.U((dataBitWidth + 1).W))
-    // val remainderS = WireInit(0.U((dataBitWidth + 1).W))
+    val myDiv = Module(new Div())
+    val myMul = Module(new Mul())
 
-    // val dividedU = WireInit(0.U((dataBitWidth + 1).W))
-    // val divisorU = WireInit(0.U((dataBitWidth + 1).W))
-    // val quotientU = WireInit(0.U((dataBitWidth + 1).W))
-    // val remainderU = WireInit(0.U((dataBitWidth + 1).W))
+    myDiv.io.start := Mux((opDiv | opMod | opDivu | opModu) === 1.U, true.B, false.B)
+    myDiv.io.src1 := Mux((opDiv | opMod | opDivu | opModu) === 1.U, io.aluSrc1, 0.U)
+    myDiv.io.src2 := Mux((opDiv | opMod | opDivu | opModu) === 1.U, io.aluSrc2, 0.U)
+    myDiv.io.signed := !(opDivu | opModu) 
+    
+    myMul.io.start := Mux((opMul | opMulh| opMulhu) === 1.U, true.B, false.B)
+    myMul.io.src1 := Mux((opMul | opMulh | opMulhu) === 1.U, io.aluSrc1, 0.U)
+    myMul.io.src2 := Mux((opMul | opMulh | opMulhu) === 1.U, io.aluSrc2, 0.U)
+    myMul.io.signed := !opMulhu
+
+    io.aluReady := Mux((opMul | opMulh | opMulhu) === 1.U, myMul.io.ready, Mux((opDiv | opMod | opDivu | opModu) === 1.U, myDiv.io.ready, true.B))
 
     when(opSub === 1.U || opSlt === 1.U || opSltu === 1.U || opAdd === 1.U){
         adderA   := io.aluSrc1
@@ -121,43 +122,24 @@ class alu extends Module {
         sllRes := io.aluSrc1 << io.aluSrc2(4, 0)
         sr64Res := Cat(Fill(32, (opSra & io.aluSrc1(31))), io.aluSrc1(31, 0)) >> io.aluSrc2(4, 0) //QUESTION
         srRes := sr64Res(31, 0)
-    }.elsewhen(opMul === 1.U || opMulh === 1.U){
-        //op1s := Cat(io.aluSrc1(31), io.aluSrc1)
-        //op2s := Cat(io.aluSrc2(31), io.aluSrc2)
-        MulResS := (io.aluSrc1.asSInt * io.aluSrc2.asSInt).asUInt
-    }.elsewhen(opMulhu === 1.U){
-        // op1u := Cat(0.U, io.aluSrc1)
-        // op2u := Cat(0.U, io.aluSrc2)
-        MulResU := io.aluSrc1 * io.aluSrc2
-    }.elsewhen(opDiv === 1.U || opMod === 1.U || opDivu === 1.U || opModu === 1.U){
-        /*
-        dividedS := Cat(io.aluSrc1(31), io.aluSrc1)
-        divisorS := Cat(io.aluSrc2(31), io.aluSrc2)
-        quotientS := dividedS / divisorS
-        remainderS := dividedS - divisorS * quotientS*/
-        val div_signed = (opDiv | opMod).asBool
-
-        val dividend_signed = io.aluSrc1(31) & div_signed
-        val divisor_signed  = io.aluSrc2(31) & div_signed
-
-        val dividend_abs = Mux(dividend_signed, (-io.aluSrc1).asUInt, io.aluSrc1.asUInt)
-        val divisor_abs  = Mux(divisor_signed, (-io.aluSrc2).asUInt, io.aluSrc2.asUInt)
-
-        val quotient_signed  = (io.aluSrc1(31) ^ io.aluSrc2(31)) & div_signed
-        val remainder_signed = io.aluSrc1(31) & div_signed
-
-        val quotient_abs  = dividend_abs / divisor_abs
-        val remainder_abs = dividend_abs - quotient_abs * divisor_abs
-        quotient  := Mux(quotient_signed, ((-quotient_abs).asSInt).asUInt, quotient_abs)
-        remainder := Mux(remainder_signed, ((-remainder_abs).asSInt).asUInt, remainder_abs)
     }
-    // .elsewhen(opDivu === 1.U || opModu === 1.U){
-    //     dividedU := Cat(0.U, io.aluSrc1)
-    //     divisorU := Cat(0.U, io.aluSrc2)
-    //     quotientU := dividedU / divisorU
-    //     remainderU := dividedU - divisorU * quotientU
-    // }
 
+    when(myMul.io.ready){
+        mulRes := myMul.io.result
+        myMul.io.allow_to_go := true.B
+    }.otherwise{
+        myMul.io.allow_to_go := false.B
+        mulRes := 0.U
+    }
+    when(myDiv.io.ready){
+        remainder := myDiv.io.result(63, 32)
+        quotient := myDiv.io.result(31, 0)
+        myDiv.io.allow_to_go := true.B
+    }.otherwise{
+        myDiv.io.allow_to_go := false.B
+        remainder := 0.U
+        quotient := 0.U
+    }
     io.aluRes := MuxCase(0.U, Seq(
         ((opAdd | opSub) === 1.U) -> addSubRes,
         (opSlt === 1.U)           -> sltRes,
@@ -169,22 +151,10 @@ class alu extends Module {
         (opLui === 1.U)           -> luiRes,
         (opSll === 1.U)           -> sllRes,
         ((opSra | opSrl) === 1.U) -> srRes,
-        (opMul === 1.U)           -> MulResS(31, 0),
-        (opMulh === 1.U)          -> MulResS(63, 32),
-        (opMulhu=== 1.U)          -> MulResU(63, 32),
+        (opMul === 1.U)           -> mulRes(31, 0),
+        ((opMulh|opMulhu) === 1.U)-> mulRes(63, 32),
         ((opDiv | opDivu) === 1.U)-> quotient(31, 0),
         ((opMod | opModu) === 1.U)-> remainder(31, 0)
     ))
-/*
-    io.aluRes := (Fill(dataBitWidth, (opAdd | opSub)) & addSubRes) |
-                 (Fill(dataBitWidth, opSlt)             & sltRes)    |
-                 (Fill(dataBitWidth, opSltu)            & sltuRes)   |
-                 (Fill(dataBitWidth, opAnd)             & andRes)    |
-                 (Fill(dataBitWidth, opNor)             & norRes)    |
-                 (Fill(dataBitWidth, opOr)              & orRes)     |
-                 (Fill(dataBitWidth, opXor)             & xorRes)    |
-                 (Fill(dataBitWidth, opLui)             & luiRes)    |
-                 (Fill(dataBitWidth, opSll)             & sllRes)    |
-                 (Fill(dataBitWidth, (opSrl | opSra))   & srRes)
-*/
+
 }

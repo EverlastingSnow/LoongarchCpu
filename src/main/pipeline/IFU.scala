@@ -18,12 +18,8 @@ class IFU extends Module {
     })
 
     val to_ifu_valid = RegNext(!reset.asBool) & !reset.asBool
-    //val to_ifu_valid = (reset.asBool === false.B)
     val ifu_ready_go = true.B 
     val ifu_valid = RegInit(false.B)
-    //val lst_valid = RegNext(io.out.valid)
-    //val jump_valid = Wire(UInt(1.W))
-    //jump_valid := !(io.br.brTaken) | (!(lst_valid) & io.br.brTaken)
     val ifu_allowin = (~ifu_valid) || (io.idu_allowin && ifu_ready_go)
     when(ifu_allowin) {ifu_valid := to_ifu_valid}
     io.out.valid := ifu_valid && ifu_ready_go && (io.br.brTaken === 0.U)

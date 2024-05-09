@@ -35,10 +35,6 @@ class mycpu extends Module {
 
     idu.io.exu_choke.w_valid <> exu.io.choke.w_valid
     idu.io.exu_choke.waddr <> exu.io.choke.waddr
-    // idu.io.mem_w_valid <> mem.io.mem_w_valid
-    // idu.io.mem_waddr <> mem.io.mem_waddr
-    // idu.io.wbu_w_valid <> wbu.io.wbu_w_valid
-    // idu.io.wbu_waddr <> wbu.io.wbu_waddr
 
     idu.io.exu_foward <> exu.io.foward
     idu.io.mem_foward <> mem.io.foward

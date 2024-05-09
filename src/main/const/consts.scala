@@ -6,6 +6,9 @@ object Myconsts{
     val addrBitWidth = 32
     val instBitWidth = 32
     val dataBitWidth = 32
+    val hiLoBitWidth = 64
+    val mulClkNum    = 2
+    val divClkNum    = 8
     
     val aluOpLen = 5
     val aluNop    = 0.U(aluOpLen.W)
@@ -47,4 +50,6 @@ object Myconsts{
     val JUMP_NORMAL = 1.U
     val JUMP_EQ = 2.U
     val JUMP_NEQ = 3.U
+
+    val BUILD = true
 }
