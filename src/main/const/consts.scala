@@ -7,8 +7,8 @@ object Myconsts{
     val instBitWidth = 32
     val dataBitWidth = 32
     val hiLoBitWidth = 64
-    val mulClkNum    = 2
-    val divClkNum    = 8
+    val mulClkNum    = 2 //若修改记得修改vivado中IP核的周期数
+    val divClkNum    = 8 //若修改记得修改vivado中IP核的周期数
     
     val aluOpLen = 5
     val aluNop    = 0.U(aluOpLen.W)
@@ -46,10 +46,22 @@ object Myconsts{
 
     val R1 = 1.U(5.W)
 
-    val JUMP_NOP = 0.U
-    val JUMP_NORMAL = 1.U
-    val JUMP_EQ = 2.U
-    val JUMP_NEQ = 3.U
+    val jumpLen = 4
+    val JUMP_NOP = 0.U(jumpLen.W)
+    val JUMP_NORMAL = 1.U(jumpLen.W)
+    val JUMP_EQ = 2.U(jumpLen.W)
+    val JUMP_NEQ = 3.U(jumpLen.W)
+    val JUMP_LT  = 4.U(jumpLen.W)
+    val JUMP_GE  = 5.U(jumpLen.W)
+    val JUMP_LTU = 6.U(jumpLen.W) 
+    val JUMP_GEU = 7.U(jumpLen.W)
 
-    val BUILD = true
+    val BUILD = false
+
+    val wordTypeLen = 3
+    val B = 0.U(wordTypeLen.W)
+    val H = 1.U(wordTypeLen.W)
+    val W = 2.U(wordTypeLen.W)
+    val BU = 3.U(wordTypeLen.W)
+    val HU = 4.U(wordTypeLen.W)
 }

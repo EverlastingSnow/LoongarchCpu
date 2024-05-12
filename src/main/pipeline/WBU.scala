@@ -24,14 +24,16 @@ class WBU extends Module {
     val mem_wb_pc = RegInit(0.U(addrBitWidth.W))
     val mem_wb_grWe = RegInit(0.U(1.W))
     val mem_wb_dest = RegInit(0.U(5.W))
-    val mem_wb_resFromMem = RegInit(0.U(1.W))   
+    //val mem_wb_resFromMem = RegInit(0.U(1.W))   
     val mem_wb_aluRes = RegInit(0.U(dataBitWidth.W))
+    //val mem_wb_wordType = RegInit(0.U(wordTypeLen.W)) 
     when (wbu_allowin && io.in.valid){
-        mem_wb_resFromMem := io.in.resFromMem
+        //mem_wb_resFromMem := io.in.resFromMem
         mem_wb_aluRes := io.in.aluRes
         mem_wb_grWe := io.in.grWe
         mem_wb_dest := io.in.dest
         mem_wb_pc := io.in.pc
+        //mem_wb_wordType := io.in.wordType
     }
     val finalRes = Wire(UInt(dataBitWidth.W))
     finalRes := mem_wb_aluRes

@@ -61,7 +61,7 @@ class Mul extends Module {
         val unsigned = RegInit(0.U(hiLoBitWidth.W))
 
         when(io.start){
-            signed   := (io.src1.asSInt * io.src2.asSInt).asSInt
+            signed   := (io.src1.asSInt * io.src2.asSInt).asUInt
             unsigned := io.src1 * io.src2
         }
         io.result := Mux(io.signed, signed, unsigned)

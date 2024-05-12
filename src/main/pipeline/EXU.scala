@@ -12,7 +12,9 @@ class ExuMessage extends Bundle {
     val dest = Output(UInt(5.W))
     val valid = Output(Bool())
     val rfdata = Output(UInt(dataBitWidth.W))
-    val memWe = Output(UInt(1.W))
+    //val memWe = Output(UInt(1.W))
+    val wordType = Output(UInt(wordTypeLen.W))
+    val ldaddr   = Output(UInt(2.W))
 }
 class EXU extends Module{
     val io = IO(new Bundle{
@@ -40,6 +42,7 @@ class EXU extends Module{
     val id_ex_resFromMem = RegInit(0.U(1.W))
     val id_ex_grWe = RegInit(0.U(1.W))
     val id_ex_dest = RegInit(0.U(5.W))
+    val id_ex_wordType = RegInit(0.U(wordTypeLen.W))
     when(exu_allowin && io.in.valid){
         id_ex_pc := io.in.pc
         id_ex_aluSrc1 := io.in.aluSrc1
@@ -50,6 +53,7 @@ class EXU extends Module{
         id_ex_resFromMem := io.in.resFromMem
         id_ex_grWe := io.in.grWe
         id_ex_dest := io.in.dest 
+        id_ex_wordType := io.in.wordType
     }
 
     val u_alu = Module(new alu)
@@ -68,16 +72,27 @@ class EXU extends Module{
     io.foward.wdata := u_alu.io.aluRes
 
     io.data.data_sram_en := 1.U 
-    io.data.data_sram_we := Mux(id_ex_memWe === 1.U && exu_valid, Fill(4, 1.U), Fill(4, 0.U))
+    io.data.data_sram_we := MuxCase(Fill(4, 0.U), Seq(
+        (id_ex_memWe === 1.U && exu_valid && id_ex_wordType === W) -> Fill(4, 1.U),
+        (id_ex_memWe === 1.U && exu_valid && id_ex_wordType === H) -> Mux(u_alu.io.aluRes(1, 0) === 0.U, "b0011".U, "b1100".U),
+        (id_ex_memWe === 1.U && exu_valid && id_ex_wordType === B) -> (1.U << u_alu.io.aluRes(1, 0))(3, 0)
+    ))
+    //io.data.data_sram_addr := Cat(u_alu.io.aluRes(31, 2), Fill(2, 0.U))
     io.data.data_sram_addr := u_alu.io.aluRes
-    io.data.data_sram_wdata := id_ex_rfdata
+
+    io.data.data_sram_wdata := MuxCase(id_ex_rfdata, Seq(
+        (id_ex_wordType === W) -> id_ex_rfdata,
+        (id_ex_wordType === B) -> Fill(4, id_ex_rfdata(7, 0)),
+        (id_ex_wordType === H) -> Fill(2, id_ex_rfdata(15, 0))
+    ))
 
     io.out.aluRes := u_alu.io.aluRes
     io.out.resFromMem := id_ex_resFromMem
     io.out.grWe := id_ex_grWe
     io.out.dest := id_ex_dest
     io.out.pc := id_ex_pc
-    io.out.memWe := id_ex_memWe
+    //io.out.memWe := id_ex_memWe
     io.out.rfdata := id_ex_rfdata
-
+    io.out.wordType := id_ex_wordType
+    io.out.ldaddr := u_alu.io.aluRes(1, 0)
 }
