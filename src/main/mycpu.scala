@@ -23,6 +23,7 @@ class mycpu extends Module {
     val exu = Module(new EXU)
     val mem = Module(new MEM)
     val wbu = Module(new WBU)
+    val csr = Module(new CSR)
     idu.io.in <> ifu.io.out
     exu.io.in <> idu.io.out
     mem.io.in <> exu.io.out
@@ -33,6 +34,15 @@ class mycpu extends Module {
     exu.io.mem_allowin <> mem.io.mem_allowin
     mem.io.wbu_allowin <> wbu.io.wbu_allowin
 
+    ifu.io.idu_stop <> idu.io.idu_stop
+    idu.io.exu_stop <> exu.io.exu_stop
+    exu.io.mem_stop <> mem.io.mem_stop
+    mem.io.wbu_stop <> wbu.io.wbu_stop
+
+    idu.io.out_csr <> exu.io.in_csr
+    exu.io.out_csr <> mem.io.in_csr
+    mem.io.out_csr <> wbu.io.in_csr
+
     idu.io.exu_choke.w_valid <> exu.io.choke.w_valid
     idu.io.exu_choke.waddr <> exu.io.choke.waddr
 
@@ -42,6 +52,8 @@ class mycpu extends Module {
 
     ifu.io.inst <> io.inst
     ifu.io.br <> idu.io.br
+    ifu.io.pc_stop <> csr.io.pc_stop
+    ifu.io.dnpc <> csr.io.dnpc
 
     idu.io.rfWe := wbu.io.rfWe
     idu.io.rfWaddr := wbu.io.rfWaddr
@@ -50,6 +62,7 @@ class mycpu extends Module {
     exu.io.data <> io.data
 
     wbu.io.debug <> io.debug
+    wbu.io.out_csr <> csr.io.csr
     
     mem.io.data_sram_rdata <> io.data.data_sram_rdata
 }
