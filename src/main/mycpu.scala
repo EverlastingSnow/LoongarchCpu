@@ -50,6 +50,9 @@ class mycpu extends Module {
     idu.io.mem_foward <> mem.io.foward
     idu.io.wbu_foward <> wbu.io.foward
 
+    idu.io.Int_en <> csr.io.Int_en
+    idu.io.ct     <> csr.io.ct
+
     ifu.io.inst <> io.inst
     ifu.io.br <> idu.io.br
     ifu.io.pc_stop <> csr.io.pc_stop

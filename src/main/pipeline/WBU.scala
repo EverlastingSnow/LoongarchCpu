@@ -30,6 +30,8 @@ class WBU extends Module {
     val mem_wb_dest = RegInit(0.U(5.W))
     val mem_wb_aluRes = RegInit(0.U(dataBitWidth.W))
 
+    val mem_wb_csrBadv     = RegInit(0.U(1.W))
+    val mem_wb_csrBadaddr  = RegInit(0.U(addrBitWidth.W))
     val mem_wb_csrExcp     = RegInit(0.U(2.W))
     val mem_wb_csrEcode    = RegInit(0.U(6.W))
     val mem_wb_csrEsubcode = RegInit(0.U(9.W))
@@ -48,6 +50,8 @@ class WBU extends Module {
         mem_wb_pc := io.in.pc
         mem_wb_resFrom := io.in.resFrom
 
+        mem_wb_csrBadv := io.in_csr.badv
+        mem_wb_csrBadaddr:= io.in_csr.badaddr
         mem_wb_csrExcp := io.in_csr.excp
         mem_wb_csrEcode := io.in_csr.ecode
         mem_wb_csrEsubcode := io.in_csr.esubcode
@@ -72,6 +76,7 @@ class WBU extends Module {
     io.rfWaddr := rfWaddr
     io.rfWdata := rfWdata
 
+    io.foward.csr_choke :=  mem_wb_grWe & wbu_valid & (mem_wb_csrWaddr === 0x40.U).asUInt & (mem_wb_csrExcp === 0.U).asUInt
     io.foward.w_valid := mem_wb_grWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt & (mem_wb_csrExcp === 0.U).asUInt
     io.foward.w_choke := mem_wb_grWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt & (mem_wb_resFrom === 2.U)
     io.foward.waddr := mem_wb_dest
@@ -82,6 +87,8 @@ class WBU extends Module {
     io.debug.debug_wb_rf_wnum := mem_wb_dest
     io.debug.debug_wb_rf_wdata := rfWdata
 
+    io.out_csr.badv := mem_wb_csrBadv
+    io.out_csr.badaddr := mem_wb_csrBadaddr
     io.out_csr.excp := mem_wb_csrExcp & Fill(2, wbu_valid.asUInt)
     io.out_csr.ecode := mem_wb_csrEcode
     io.out_csr.esubcode := mem_wb_csrEsubcode 

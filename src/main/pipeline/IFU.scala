@@ -7,6 +7,8 @@ import Myconsts._
 class IfuMessage extends Bundle {
     val inst = Output(UInt(instBitWidth.W))
     val pc = Output(UInt(addrBitWidth.W))
+    val csrBadv = Output(UInt(1.W))
+    val csrBadaddr = Output(UInt(addrBitWidth.W))
     val valid = Output(Bool())
 }
 class IFU extends Module {
@@ -48,12 +50,17 @@ class IFU extends Module {
         pc := dnPc
     }
 
+    io.out.csrBadv := (pc(1,0) =/= 0.U).asUInt
+    io.out.csrBadaddr:= pc
     
     io.inst.inst_sram_en := to_ifu_valid && ifu_allowin
     io.inst.inst_sram_we := Fill(4, 0.U)
     io.inst.inst_sram_addr := dnPc
+    //Mux(io.out.csrBadv === 1.U && !io.out.valid, 0.U(addrBitWidth.W), dnPc)
+
     io.inst.inst_sram_wdata := Fill(32, 0.U)
 
-    io.out.inst := Mux(io.out.valid, io.inst.inst_sram_rdata, 0.U(instBitWidth.W))
+    io.out.inst := Mux(io.out.valid && io.out.csrBadv === 0.U, io.inst.inst_sram_rdata, 0.U(instBitWidth.W))
     io.out.pc := pc
+
 }

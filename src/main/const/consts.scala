@@ -1,5 +1,6 @@
 package loongarch32i
 import chisel3._
+import chisel3.util._
 
 object Myconsts{
     val PCStart = "h1bfffffc"
@@ -9,10 +10,16 @@ object Myconsts{
     val hiLoBitWidth = 64
     val mulClkNum    = 2 //若修改记得修改vivado中IP核的周期数
     val divClkNum    = 8 //若修改记得修改vivado中IP核的周期数
+    val TIMEN        = 25
     
     val resTypeLen = 2
     val resFromMem = 1.U(resTypeLen.W)
     val resFromCsr = 2.U(resTypeLen.W)
+    
+    val READ_NOP = 0.U
+    val READ_ME  = 1.U
+    val READ_CSR = 2.U
+
 
     val aluOpLen = 5
     val aluNop    = 0.U(aluOpLen.W)
@@ -40,15 +47,19 @@ object Myconsts{
     val CSRXCHG   = 22.U(aluOpLen.W)
     val SYSCALL   = 23.U(aluOpLen.W)
     val ERTN      = 24.U(aluOpLen.W)
+    val BREAK     = 25.U(aluOpLen.W)
+    val instNop   = 31.U(aluOpLen.W)
 
     val NOP = 0.U
 
-    val imm_NOP = 0.U
-    val rNOP = 0.U
+    val imm_NOP = 0.U(3.W)
+    
+    val imm_si12id = 1.U(3.W)
+    val imm_si16id = 2.U(3.W)
+    val imm_si20id = 3.U(3.W) 
+    val imm_si26id = 4.U(3.W)
 
-    val READ_NOP = 0.U
-    val READ_ME  = 1.U
-    val READ_CSR = 2.U
+    val rNOP = 0.U
 
     val WR_NOP = 0.U
 
@@ -81,20 +92,50 @@ object Myconsts{
     val CRMDID = 0x0.U(ctrlRegLen.W)
     val PRMDID = 0x1.U(ctrlRegLen.W)
     // val EUENID = 0x2.U(ctrlRegLen.W)
-    // val ECFGID = 0x4.U(ctrlRegLen.W)
+    val ECFGID = 0x4.U(ctrlRegLen.W)
     val ESTATID = 0x5.U(ctrlRegLen.W)
     val ERAID = 0x6.U(ctrlRegLen.W)
-    //val BADVID = 0x7.U(ctrlRegLen.W)
-    val EENTRYID = 0xc.U(ctrlRegLen.W) 
+    val BADVID = 0x7.U(ctrlRegLen.W)
+    val EENTRYID = 0xc.U(ctrlRegLen.W)
+    //val TLBIDXID = 0x10.U(ctrlRegLen.W)
+    //val TLBEHIID = 0x11.U(ctrlRegLen.W)
+    //val TLBELO0ID = 0x12.U(ctrlRegLen.W)
+    //val TLBELO1ID = 0x13.U(ctrlRegLen.W)
+    //val ASIDID    = 0x18.U(ctrlRegLen.W)
+    //val PGDLID    = 0x19.U(ctrlRegLen.W)
+    //val PGDHID    = 0x1a.U(ctrlRegLen.W)
+    //val PGDID     = 0x1b.U(ctrlRegLen.W) 
     //val CPUIDID = 0x20.U(ctrlRegLen.W)
     val SAVE0ID = 0x30.U(ctrlRegLen.W)
     val SAVE1ID = 0x31.U(ctrlRegLen.W)
     val SAVE2ID = 0x32.U(ctrlRegLen.W)
     val SAVE3ID = 0x33.U(ctrlRegLen.W)
+    val TIDID   = 0x40.U(ctrlRegLen.W)
+    val TCFGID  = 0x41.U(ctrlRegLen.W)
+    val TVALID  = 0x42.U(ctrlRegLen.W)
+    val TICLRID = 0x44.U(ctrlRegLen.W)
+    //val LLBCTLID= 0x60.U(ctrlRegLen.W)
+    //val TLBRENTRYID=0x88.U(ctrlRegLen.W)
+    //val CTAGID  = 0x98.U(ctrlRegLen.W)
+    //val DMW0ID  = 0x180.U(ctrlRegLen.W)
+    //val DMW1ID  = 0x181.U(ctrlRegLen.W)
+    val EsubCode_Normal = 0.U(1.W)
+    val EsubCode_ADEF = 0.U(1.W)
+    val EsubCode_ADEM = 1.U(1.W)
 
     val Ecode_SYS = 0x0b.U(6.W)
+    val Ecode_ADEF = 0x08.U(6.W)
+    val Ecode_ADEM = 0x08.U(6.W)
+    val Ecode_ALE  = 0x09.U(6.W)
+    val Ecode_BRK  = 0x0c.U(6.W)
+    val Ecode_INE  = 0x0d.U(6.W)
+    val Ecode_INT  = 0x0.U(6.W)
+
+    val ALE_CHECK_NOP = BitPat("b00")
+    val ALE_CHECK_1   = BitPat("b01")
 }
 /*
+ADEF ALE BRK INE
         0.U(instBitWidth.W), //CRMD (31,9)0 (8,7)DATM (6,5)DATF (4)PG (3)DA (2)IE (1,0)PLV
         0.U(instBitWidth.W), //PRMD (31,3)0 (2)PIE (1,0)PPLV
         //0.U(instBitWidth.W), EUEN (31,1)0 (0)FPE

@@ -36,6 +36,8 @@ class MEM extends Module {
     val ex_me_wordType = RegInit(0.U(wordTypeLen.W))
     val ex_me_ldaddr   = RegInit(0.U(2.W))
 
+    val ex_me_csrBadv     = RegInit(0.U(1.W))
+    val ex_me_csrBadaddr  = RegInit(0.U(addrBitWidth.W))
     val ex_me_csrExcp     = RegInit(0.U(2.W))
     val ex_me_csrEcode    = RegInit(0.U(6.W))
     val ex_me_csrEsubcode = RegInit(0.U(9.W))
@@ -63,6 +65,8 @@ class MEM extends Module {
         ex_me_wordType := io.in.wordType
         ex_me_ldaddr   := io.in.ldaddr
 
+        ex_me_csrBadaddr := io.in_csr.badaddr
+        ex_me_csrBadv  := io.in_csr.badv
         ex_me_csrExcp := io.in_csr.excp
         ex_me_csrEcode := io.in_csr.ecode
         ex_me_csrEsubcode := io.in_csr.esubcode
@@ -100,6 +104,7 @@ class MEM extends Module {
     ))
     , ex_me_aluRes)
 
+    io.foward.csr_choke := ex_me_grWe & mem_valid & (ex_me_csrWaddr === 0x40.U).asUInt & !(io.wbu_stop)
     io.foward.w_valid := ex_me_grWe & mem_valid & (ex_me_dest =/= 0.U).asUInt & !(io.wbu_stop)
     io.foward.w_choke := ex_me_grWe & mem_valid & (ex_me_dest =/= 0.U).asUInt & (ex_me_resFrom === 2.U) & !io.wbu_stop
     io.foward.waddr := ex_me_dest
@@ -112,6 +117,8 @@ class MEM extends Module {
     io.out.resFrom := ex_me_resFrom
     io.mem_stop := io.wbu_stop || (mem_valid && ex_me_csrExcp =/= 0.U)
 
+    io.out_csr.badv := ex_me_csrBadv
+    io.out_csr.badaddr := ex_me_csrBadaddr
     io.out_csr.excp := ex_me_csrExcp
     io.out_csr.ecode := ex_me_csrEcode
     io.out_csr.esubcode := ex_me_csrEsubcode 

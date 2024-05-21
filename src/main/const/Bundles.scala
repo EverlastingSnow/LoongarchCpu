@@ -33,6 +33,7 @@ class choke_info extends Bundle{
     val waddr   = Output(UInt(5.W))
 }
 class foward_info extends Bundle{
+    val csr_choke = Output(UInt(1.W))
     val w_valid = Output(UInt(1.W))
     val w_choke = Output(UInt(1.W))
     val waddr   = Output(UInt(5.W))
@@ -52,8 +53,16 @@ class csr_op_info extends Bundle {
     val waddr   = Output(UInt(ctrlRegLen.W))
     val wdata   = Output(UInt(dataBitWidth.W))
     val raddr   = Output(UInt(ctrlRegLen.W))
+    val badv    = Output(UInt(1.W))
+    val badaddr = Output(UInt(addrBitWidth.W))
 }
 
 class csr_info extends csr_op_info{
     val rdata   = Input(UInt(dataBitWidth.W))
+}
+
+class counter_info extends Bundle {
+    val counterH = Output(UInt(dataBitWidth.W))
+    val counterL = Output(UInt(dataBitWidth.W))
+    val counterID= Output(UInt(dataBitWidth.W))
 }
