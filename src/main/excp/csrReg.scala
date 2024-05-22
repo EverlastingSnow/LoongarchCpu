@@ -165,27 +165,14 @@ class TICLR extends BaseCsr {
     override val w_we = "b00000000000000000000000000000001".U
     override val info = RegInit(0.U.asTypeOf(new TICLR_info))
 }
-        //CRMD (31,9)0 (8,7)DATM (6,5)DATF (4)PG (3)DA (2)IE (1,0)PLV
-        //PRMD (31,3)0 (2)PIE (1,0)PPLV
-        //EUEN (31,1)0 (0)FPE
-        //ECFG (31,13)0 (12,11)LIE[12:11] (10)0 (9,0)LIE[9:0]
-        //ESTAT (31)0 (30,22)EsubCode (21:16)Ecode (15,13)0 (12)IS[12] (11)IS[11] (10)0 (9,2)IS[9:2] (1,0)IS[1:0]
-        //ERA  (31,0) PC
-        //0.U(instBitWidth.W), BADV (31,0) vaddr
-        //EENTRY (31,6)va (5, 0)0
-        //0.U(instBitWidth.W), CPUID (31,9)0 (8,0)CoreID
-        //SAVE0 
-        //SAVE1
-        //SAVE2
-        //SAVE3
-
 
 class CSR extends Module {
     val io = IO(new Bundle{
         val csr = Flipped(new csr_info())
+//pc_stop异常跳转信号,dnpc Pc寄存器下一跳地址
         val pc_stop = Output(Bool())
         val dnpc = Output(UInt(addrBitWidth.W))
-
+//Int_en INT异常信号,ct stable_counter
         val Int_en = Output(UInt(1.W))
         val ct = new counter_info()
     })
@@ -234,7 +221,7 @@ class CSR extends Module {
         TICLR
     )
     val mask = Mux(io.csr.mask_we === 1.U, io.csr.mask, "b11111111111111111111111111111111".U)
-
+//自带时钟
     when(io.csr.wen === 1.U && io.csr.waddr === TCFGID){
         val value = ((mask & io.csr.wdata) | (~mask & TCFG.info.asUInt))
         TVAL.info.timeval := Cat(value(TIMEN - 1, 2), 1.U(2.W))
@@ -252,7 +239,7 @@ class CSR extends Module {
     when(TCFG.info.en === 1.U && TVAL.info.timeval === 0.U && TVAL_info_timeval_last === 1.U){
         ESTAT.info.is_11 := 1.U
     }
-
+//读csr
     io.csr.rdata := 0.U
     for (x <- csrList){
         when(x.id === io.csr.raddr){
@@ -263,7 +250,7 @@ class CSR extends Module {
             }
         }
     }
-
+//异常信息保存
     io.pc_stop := io.csr.excp =/= 0.U
     io.dnpc := Mux(io.csr.excp === 1.U, EENTRY.info.asUInt, ERA.info.asUInt)
     when (io.csr.excp === 1.U){
@@ -283,6 +270,7 @@ class CSR extends Module {
             CRMD.info.pg := "b1".U
         }
     }
+//写csr
     when (io.csr.wen === 1.U) {
         for (x <- csrList) {
             when(x.id === io.csr.waddr) {
@@ -320,3 +308,16 @@ Ecode EsubCode
 0x1A-0x3E 保留
 0x3F  0        TLBR TLB重
 */
+        //CRMD (31,9)0 (8,7)DATM (6,5)DATF (4)PG (3)DA (2)IE (1,0)PLV
+        //PRMD (31,3)0 (2)PIE (1,0)PPLV
+        //EUEN (31,1)0 (0)FPE
+        //ECFG (31,13)0 (12,11)LIE[12:11] (10)0 (9,0)LIE[9:0]
+        //ESTAT (31)0 (30,22)EsubCode (21:16)Ecode (15,13)0 (12)IS[12] (11)IS[11] (10)0 (9,2)IS[9:2] (1,0)IS[1:0]
+        //ERA  (31,0) PC
+        //0.U(instBitWidth.W), BADV (31,0) vaddr
+        //EENTRY (31,6)va (5, 0)0
+        //0.U(instBitWidth.W), CPUID (31,9)0 (8,0)CoreID
+        //SAVE0 
+        //SAVE1
+        //SAVE2
+        //SAVE3

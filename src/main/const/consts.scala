@@ -10,17 +10,18 @@ object Myconsts{
     val hiLoBitWidth = 64
     val mulClkNum    = 2 //若修改记得修改vivado中IP核的周期数
     val divClkNum    = 8 //若修改记得修改vivado中IP核的周期数
-    val TIMEN        = 25
+    val TIMEN        = 25 //自带计时器位宽
+    val BUILD = false //是否使用IP核
     
     val resTypeLen = 2
     val resFromMem = 1.U(resTypeLen.W)
     val resFromCsr = 2.U(resTypeLen.W)
-    
+//对应上面的resFrom    
     val READ_NOP = 0.U
     val READ_ME  = 1.U
     val READ_CSR = 2.U
 
-
+//alu类型,附带某些特殊异常指令编号
     val aluOpLen = 5
     val aluNop    = 0.U(aluOpLen.W)
     val aluAdd    = 1.U(aluOpLen.W) 
@@ -48,39 +49,36 @@ object Myconsts{
     val SYSCALL   = 23.U(aluOpLen.W)
     val ERTN      = 24.U(aluOpLen.W)
     val BREAK     = 25.U(aluOpLen.W)
-    val instNop   = 31.U(aluOpLen.W)
+    val instNop   = 31.U(aluOpLen.W) //INE错误
 
     val NOP = 0.U
-
+//要用到的立即数类型
     val imm_NOP = 0.U(3.W)
-    
     val imm_si12id = 1.U(3.W)
     val imm_si16id = 2.U(3.W)
     val imm_si20id = 3.U(3.W) 
     val imm_si26id = 4.U(3.W)
 
     val rNOP = 0.U
-
+//要写的类型
     val WR_NOP = 0.U
-
     val WR_ME  = 1.U
     val WR_RG  = 1.U
     val WR_CSR = 1.U
 
     val R1 = 1.U(5.W)
-
-    val jumpLen = 4
-    val JUMP_NOP = 0.U(jumpLen.W)
+//跳转类型
+    val jumpLen     = 4
+    val JUMP_NOP    = 0.U(jumpLen.W)
     val JUMP_NORMAL = 1.U(jumpLen.W)
-    val JUMP_EQ = 2.U(jumpLen.W)
-    val JUMP_NEQ = 3.U(jumpLen.W)
-    val JUMP_LT  = 4.U(jumpLen.W)
-    val JUMP_GE  = 5.U(jumpLen.W)
-    val JUMP_LTU = 6.U(jumpLen.W) 
-    val JUMP_GEU = 7.U(jumpLen.W)
+    val JUMP_EQ     = 2.U(jumpLen.W)
+    val JUMP_NEQ    = 3.U(jumpLen.W)
+    val JUMP_LT     = 4.U(jumpLen.W)
+    val JUMP_GE     = 5.U(jumpLen.W)
+    val JUMP_LTU    = 6.U(jumpLen.W) 
+    val JUMP_GEU    = 7.U(jumpLen.W)
 
-    val BUILD = false
-
+//ld或者st的位宽和是否为无符号数
     val wordTypeLen = 3
     val B = 0.U(wordTypeLen.W)
     val H = 1.U(wordTypeLen.W)
@@ -88,6 +86,7 @@ object Myconsts{
     val BU = 3.U(wordTypeLen.W)
     val HU = 4.U(wordTypeLen.W)
 
+//csr寄存器ID
     val ctrlRegLen = 14
     val CRMDID = 0x0.U(ctrlRegLen.W)
     val PRMDID = 0x1.U(ctrlRegLen.W)
@@ -119,18 +118,19 @@ object Myconsts{
     //val CTAGID  = 0x98.U(ctrlRegLen.W)
     //val DMW0ID  = 0x180.U(ctrlRegLen.W)
     //val DMW1ID  = 0x181.U(ctrlRegLen.W)
+//Esubcode类型
     val EsubCode_Normal = 0.U(1.W)
     val EsubCode_ADEF = 0.U(1.W)
     val EsubCode_ADEM = 1.U(1.W)
-
-    val Ecode_SYS = 0x0b.U(6.W)
+//Ecode类型
+    val Ecode_SYS  = 0x0b.U(6.W)
     val Ecode_ADEF = 0x08.U(6.W)
     val Ecode_ADEM = 0x08.U(6.W)
     val Ecode_ALE  = 0x09.U(6.W)
     val Ecode_BRK  = 0x0c.U(6.W)
     val Ecode_INE  = 0x0d.U(6.W)
     val Ecode_INT  = 0x0.U(6.W)
-
+//ALE检查,用于EXU检查是否ALE
     val ALE_CHECK_NOP = BitPat("b00")
     val ALE_CHECK_1   = BitPat("b01")
 }

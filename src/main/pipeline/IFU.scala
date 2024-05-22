@@ -56,7 +56,6 @@ class IFU extends Module {
     io.inst.inst_sram_en := to_ifu_valid && ifu_allowin
     io.inst.inst_sram_we := Fill(4, 0.U)
     io.inst.inst_sram_addr := dnPc
-    //Mux(io.out.csrBadv === 1.U && !io.out.valid, 0.U(addrBitWidth.W), dnPc)
 
     io.inst.inst_sram_wdata := Fill(32, 0.U)
 
