@@ -224,7 +224,7 @@ class CSR extends Module {
 //自带时钟
     when(io.csr.wen === 1.U && io.csr.waddr === TCFGID){
         val value = ((mask & io.csr.wdata) | (~mask & TCFG.info.asUInt))
-        TVAL.info.timeval := Cat(value(TIMEN - 1, 2), 1.U(2.W))
+        TVAL.info.timeval := Cat(value(TIMEN - 1, 2), 1.U(2.W)) //PROBLEM:1.U?0.U?
     }.elsewhen(TCFG.info.en === 1.U){
         when(TVAL.info.timeval === 0.U && TCFG.info.periodic === 1.U){
             TVAL.info.timeval := Mux(TCFG.info.periodic === 1.U, Cat(TCFG.info.initval, Fill(2, 0.U)), 0.U)

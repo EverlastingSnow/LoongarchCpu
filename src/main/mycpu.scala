@@ -5,10 +5,7 @@ import chisel3.util._
 import Myconsts._
 
 class mycpuIO extends Bundle {
-    //inst sram
-    val inst = new inst_info()
-    //data sram
-    val data = new data_info()
+    val axi = new AXI_info()
     //trace debug
     val debug = new debug_info()
 }
@@ -16,6 +13,10 @@ class mycpuIO extends Bundle {
 class mycpu extends Module {
     val io = IO(new mycpuIO())
     
+    val data = Module(new DCACHE).io
+    val inst = Module(new ICACHE).io
+    val axi  = Module(new AXI).io
+
     val valid = RegInit(true.B)
 
     val ifu = Module(new IFU)
@@ -53,7 +54,9 @@ class mycpu extends Module {
     idu.io.Int_en <> csr.io.Int_en
     idu.io.ct     <> csr.io.ct
 
-    ifu.io.inst <> io.inst
+    ifu.io.inst <> inst.in 
+    inst.icache <> axi.icache
+
     ifu.io.br <> idu.io.br
     ifu.io.pc_stop <> csr.io.pc_stop
     ifu.io.dnpc <> csr.io.dnpc
@@ -62,10 +65,14 @@ class mycpu extends Module {
     idu.io.rfWaddr := wbu.io.rfWaddr
     idu.io.rfWdata := wbu.io.rfWdata
 
-    exu.io.data <> io.data
+    exu.io.data <> data.in
+    data.dcache <> axi.dcache
 
     wbu.io.debug <> io.debug
     wbu.io.out_csr <> csr.io.csr
     
-    mem.io.data_sram_rdata <> io.data.data_sram_rdata
+    mem.io.data_sram_rdata <> data.in.rdata
+    mem.io.data_sram_data_ok <> data.in.data_ok
+
+    axi.axi <> io.axi
 }

@@ -4,20 +4,40 @@ import chisel3._
 import chisel3.util._
 import Myconsts._
 
-class inst_info extends Bundle{
-    val inst_sram_en    = Output(UInt(1.W))
-    val inst_sram_we    = Output(UInt(4.W))
-    val inst_sram_addr  = Output(UInt(addrBitWidth.W))
-    val inst_sram_wdata = Output(UInt(dataBitWidth.W))
-    val inst_sram_rdata = Input(UInt(dataBitWidth.W))
+class sram_info extends Bundle{
+    val req     = Output(UInt(1.W))
+    val wr      = Output(UInt(1.W))
+    val size    = Output(UInt(2.W))
+    val wstrb   = Output(UInt(4.W))
+    val addr    = Output(UInt(addrBitWidth.W))
+    val wdata   = Output(UInt(dataBitWidth.W))
+    val ready_go= Output(UInt(1.W))
+    val rdata   = Input(UInt(dataBitWidth.W))
+    val addr_ok = Input(UInt(1.W))
+    val data_ok = Input(UInt(1.W))
 }
-class data_info extends Bundle{
-    val data_sram_en    = Output(Bool())
-    val data_sram_we    = Output(UInt(4.W))
-    val data_sram_addr  = Output(UInt(addrBitWidth.W))
-    val data_sram_wdata = Output(UInt(dataBitWidth.W))
-    val data_sram_rdata = Input(UInt(dataBitWidth.W))
-}
+// class inst_info extends Bundle{
+//     val inst_sram_req     = Output(UInt(1.W))
+//     val inst_sram_wr      = Output(UInt(1.W))
+//     val inst_sram_size    = Output(UInt(2.W))
+//     val inst_sram_wstrb   = Output(UInt(4.W))
+//     val inst_sram_addr    = Output(UInt(addrBitWidth.W))
+//     val inst_sram_wdata   = Output(UInt(dataBitWidth.W))
+//     val inst_sram_rdata   = Input(UInt(dataBitWidth.W))
+//     val inst_sram_addr_ok = Input(UInt(1.W))
+//     val inst_sram_data_ok = Input(UInt(1.W))
+// }
+// class data_info extends Bundle{
+//     val data_sram_req     = Output(UInt(1.W))
+//     val data_sram_wr      = Output(UInt(1.W))
+//     val data_sram_size    = Output(UInt(2.W))
+//     val data_sram_wstrb   = Output(UInt(4.W))
+//     val data_sram_addr    = Output(UInt(addrBitWidth.W))
+//     val data_sram_wdata   = Output(UInt(dataBitWidth.W))
+//     val data_sram_rdata   = Input(UInt(dataBitWidth.W))
+//     val data_sram_addr_ok = Input(UInt(1.W))
+//     val data_sram_data_ok = Input(UInt(1.W))
+// }
 class debug_info extends Bundle{
     val debug_wb_pc       = Output(UInt(addrBitWidth.W))
     val debug_wb_rf_we    = Output(UInt(4.W))

@@ -119,9 +119,9 @@ object Myconsts{
     //val DMW0ID  = 0x180.U(ctrlRegLen.W)
     //val DMW1ID  = 0x181.U(ctrlRegLen.W)
 //Esubcode类型
-    val EsubCode_Normal = 0.U(1.W)
-    val EsubCode_ADEF = 0.U(1.W)
-    val EsubCode_ADEM = 1.U(1.W)
+    val EsubCode_Normal = 0.U(9.W)
+    val EsubCode_ADEF = 0.U(9.W)
+    val EsubCode_ADEM = 1.U(9.W)
 //Ecode类型
     val Ecode_SYS  = 0x0b.U(6.W)
     val Ecode_ADEF = 0x08.U(6.W)

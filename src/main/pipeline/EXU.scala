@@ -14,11 +14,12 @@ class ExuMessage extends Bundle {
     val rfdata = Output(UInt(dataBitWidth.W))
     val wordType = Output(UInt(wordTypeLen.W))
     val ldaddr   = Output(UInt(2.W))
+    //val req      = Output(UInt(1.W))
 }
 class EXU extends Module{
     val io = IO(new Bundle{
         val in = Flipped(new IduMessage())    
-        val data = new data_info()
+        val data = new sram_info()
         val out = new ExuMessage()
         val exu_allowin = Output(Bool())
         val exu_stop = Output(Bool())
@@ -32,9 +33,8 @@ class EXU extends Module{
     })
     val exu_ready_go = Wire(Bool()) 
     val exu_valid = RegInit(false.B)
-    val exu_allowin = (~exu_valid) || (io.mem_allowin && exu_ready_go)
+    val exu_allowin = (~exu_valid) || (io.mem_allowin && exu_ready_go && io.data.data_ok === 1.U)
     when(exu_allowin || io.mem_stop) {exu_valid := io.in.valid && !io.mem_stop}
-    io.out.valid := exu_ready_go && exu_valid && !io.mem_stop
     io.exu_allowin := exu_allowin
 
     val wr_exu_reg_enable = exu_allowin && io.in.valid
@@ -46,8 +46,6 @@ class EXU extends Module{
     u_alu.io.aluOp := id_ex.aluOp
     u_alu.io.aluSrc1 := id_ex.aluSrc1
     u_alu.io.aluSrc2 := id_ex.aluSrc2
-
-    exu_ready_go := u_alu.io.aluReady
 
     io.choke.w_valid := id_ex.grWe & exu_valid & (id_ex.dest =/= 0.U).asUInt & (id_ex.resFrom === 1.U).asUInt
     io.choke.waddr := id_ex.dest
@@ -71,15 +69,21 @@ class EXU extends Module{
     val final_csrExcp :: final_csrEcode :: final_csrEsubcode :: final_csrBadv :: final_csrBadaddr :: Nil = ALE_Res
 
 //st指令
-    io.data.data_sram_en := 1.U 
-    io.data.data_sram_we := MuxCase(Fill(4, 0.U), Seq(
+    io.data.req := Mux(exu_valid && (id_ex.resFrom === resFromMem || id_ex.memWe === 1.U), 1.U, 0.U)
+    io.data.wr := Mux(id_ex.memWe === 1.U, 1.U, 0.U) 
+    io.data.size := MuxCase(2.U(2.W), Seq(
+        (id_ex.memWe === 1.U && exu_valid && final_csrBadv === 0.U && id_ex_csr.excp === 0.U && !io.mem_stop && id_ex.wordType === W) -> 2.U(2.W),
+        (id_ex.memWe === 1.U && exu_valid && final_csrBadv === 0.U && id_ex_csr.excp === 0.U && !io.mem_stop && id_ex.wordType === H) -> 1.U(2.W),
+        (id_ex.memWe === 1.U && exu_valid && final_csrBadv === 0.U && id_ex_csr.excp === 0.U && !io.mem_stop && id_ex.wordType === B) -> 0.U(2.W)
+    ))
+    io.data.wstrb := MuxCase(Fill(4, 0.U), Seq(
         (id_ex.memWe === 1.U && exu_valid && final_csrBadv === 0.U && id_ex_csr.excp === 0.U && !io.mem_stop && id_ex.wordType === W) -> Fill(4, 1.U),
         (id_ex.memWe === 1.U && exu_valid && final_csrBadv === 0.U && id_ex_csr.excp === 0.U && !io.mem_stop && id_ex.wordType === H) -> Mux(u_alu.io.aluRes(1, 0) === 0.U, "b0011".U, "b1100".U),
         (id_ex.memWe === 1.U && exu_valid && final_csrBadv === 0.U && id_ex_csr.excp === 0.U && !io.mem_stop && id_ex.wordType === B) -> (1.U << u_alu.io.aluRes(1, 0))(3, 0)
     ))
-    io.data.data_sram_addr := u_alu.io.aluRes
+    io.data.addr := u_alu.io.aluRes
 
-    io.data.data_sram_wdata := MuxCase(id_ex.rfdata, Seq(
+    io.data.wdata := MuxCase(id_ex.rfdata, Seq(
         (id_ex.wordType === W) -> id_ex.rfdata,
         (id_ex.wordType === B) -> Fill(4, id_ex.rfdata(7, 0)),
         (id_ex.wordType === H) -> Fill(2, id_ex.rfdata(15, 0))
@@ -93,6 +97,7 @@ class EXU extends Module{
     io.out.rfdata   := id_ex.rfdata
     io.out.wordType := id_ex.wordType
     io.out.ldaddr   := u_alu.io.aluRes(1, 0)
+    //io.out.req      := io.data.req
 
     io.exu_stop := io.mem_stop || (exu_valid && id_ex_csr.excp =/= 0.U)
 
@@ -108,4 +113,14 @@ class EXU extends Module{
     io.out_csr.wdata    := id_ex_csr.wdata
     io.out_csr.raddr    := id_ex_csr.raddr
     io.out_csr.pc       := id_ex_csr.pc
+
+    val data_ready = Wire(Bool())
+    data_ready := (io.data.req === 0.U || io.data.data_ok === 1.U)
+
+    io.out.valid := exu_ready_go && exu_valid && !io.mem_stop && data_ready
+    //io.out.valid := exu_ready_go && exu_valid && !io.mem_stop
+
+    io.data.ready_go := io.mem_allowin.asUInt
+
+    exu_ready_go := u_alu.io.aluReady && data_ready
 }

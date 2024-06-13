@@ -21,6 +21,7 @@ class MEM extends Module {
         val wbu_allowin = Input(Bool())
         val wbu_stop    = Input(Bool())
         val data_sram_rdata = Input(UInt(dataBitWidth.W))
+        val data_sram_data_ok = Input(UInt(1.W))
         val foward = new foward_info()
 
         val in_csr = Flipped(new csr_op_info())
@@ -31,7 +32,8 @@ class MEM extends Module {
     val mem_valid = RegInit(false.B)
     val mem_allowin = (~mem_valid) || (io.wbu_allowin && mem_ready_go)
     when(mem_allowin || io.wbu_stop) {mem_valid := io.in.valid && !io.wbu_stop}
-    io.out.valid := mem_ready_go && mem_valid && !io.wbu_stop
+     io.out.valid := mem_ready_go && mem_valid && !io.wbu_stop
+    //io.out.valid := mem_ready_go && mem_valid && !io.wbu_stop
     io.mem_allowin := mem_allowin
 
     val wr_mem_reg_enable = mem_allowin && io.in.valid

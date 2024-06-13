@@ -14,7 +14,7 @@ class IfuMessage extends Bundle {
 class IFU extends Module {
     val io = IO(new Bundle{
         val br = new br_info()
-        val inst = new inst_info()
+        val inst = new sram_info()
         val out = new IfuMessage()
         val idu_allowin = Input(Bool())
         val idu_stop  = Input(Bool())
@@ -23,9 +23,10 @@ class IFU extends Module {
     })
 
     val to_ifu_valid = RegNext(!reset.asBool) & !reset.asBool
-    val ifu_ready_go = true.B 
+    val ifu_ready_go = Wire(Bool()) 
+    ifu_ready_go := true.B
     val ifu_valid = RegInit(false.B)
-    val ifu_allowin = ((~ifu_valid) || (io.idu_allowin && ifu_ready_go)) && !io.idu_stop
+    val ifu_allowin = ((~ifu_valid) || (io.idu_allowin && ifu_ready_go && io.inst.data_ok === 1.U)) && !io.idu_stop
     when(ifu_allowin) {ifu_valid := to_ifu_valid}
     
     val snPc = Wire(UInt(addrBitWidth.W))
@@ -35,7 +36,8 @@ class IFU extends Module {
     val csr_pc_stop = RegNext(io.pc_stop)
     val csr_dnpc    = RegNext(io.dnpc)
 
-    io.out.valid := ifu_valid && ifu_ready_go && (io.br.brTaken === 0.U) && !io.idu_stop && !csr_pc_stop
+    io.out.valid := ifu_valid && ifu_ready_go && (io.br.brTaken === 0.U) && !io.idu_stop && !csr_pc_stop && io.inst.data_ok === 1.U 
+    
     
     snPc := pc + "h4".U;
     dnPc := Mux(csr_pc_stop === 1.U,
@@ -53,13 +55,22 @@ class IFU extends Module {
     io.out.csrBadv := (pc(1,0) =/= 0.U).asUInt
     io.out.csrBadaddr:= pc
     
-    io.inst.inst_sram_en := to_ifu_valid && ifu_allowin
-    io.inst.inst_sram_we := Fill(4, 0.U)
-    io.inst.inst_sram_addr := dnPc
+    io.inst.req := to_ifu_valid && ifu_allowin
+    io.inst.wr  := 0.U
+    io.inst.wstrb := 0.U(4.W)
+    io.inst.size:= 2.U
+    io.inst.addr := dnPc
+    io.inst.wdata := Fill(32, 0.U)
+    io.inst.ready_go := io.idu_allowin.asUInt 
 
-    io.inst.inst_sram_wdata := Fill(32, 0.U)
-
-    io.out.inst := Mux(io.out.valid && io.out.csrBadv === 0.U, io.inst.inst_sram_rdata, 0.U(instBitWidth.W))
+    io.out.inst := Mux(io.out.valid && io.out.csrBadv === 0.U && io.inst.data_ok === 1.U, io.inst.rdata, 0.U(instBitWidth.W))
+    //io.out.inst := Mux(io.out.valid && io.out.csrBadv === 0.U, io.inst.rdata, 0.U(instBitWidth.W))
     io.out.pc := pc
 
 }
+
+/*
+addr -> slave
+master <-addr_ok
+master <-data_ok rdata
+*/
