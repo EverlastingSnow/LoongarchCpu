@@ -7,7 +7,7 @@ import Myconsts._
 class WBU extends Module {
     val io = IO(new Bundle{
         val in = Flipped(new MemMessage())
-        val debug = new debug_info()
+        //val debug = new debug_info()
         val rfWe = Output(UInt(1.W))
         val rfWaddr = Output(UInt(5.W))
         val rfWdata = Output(UInt(dataBitWidth.W))
@@ -51,9 +51,10 @@ class WBU extends Module {
     io.foward.w_valid := mem_wb_grWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt
     io.foward.waddr := mem_wb_dest
     io.foward.wdata := rfWdata
-
+/*
     io.debug.debug_wb_pc := mem_wb_pc
     io.debug.debug_wb_rf_we := Fill(4, rfWe & wbu_valid & (mem_wb_dest =/= 0.U).asUInt)
     io.debug.debug_wb_rf_wnum := mem_wb_dest
     io.debug.debug_wb_rf_wdata := finalRes
+*/
 }

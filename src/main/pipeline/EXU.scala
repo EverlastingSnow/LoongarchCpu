@@ -71,12 +71,14 @@ class EXU extends Module{
     io.foward.waddr := id_ex_dest
     io.foward.wdata := u_alu.io.aluRes
 
-    io.data.data_sram_en := 1.U 
-    io.data.data_sram_we := MuxCase(Fill(4, 0.U), Seq(
+    io.data.data_sram_ce := 1.U
+    io.data.data_sram_oe := id_ex_memWe === 0.U 
+    io.data.data_sram_be := MuxCase(Fill(4, 0.U), Seq(
         (id_ex_memWe === 1.U && exu_valid && id_ex_wordType === W) -> Fill(4, 1.U),
         (id_ex_memWe === 1.U && exu_valid && id_ex_wordType === H) -> Mux(u_alu.io.aluRes(1, 0) === 0.U, "b0011".U, "b1100".U),
         (id_ex_memWe === 1.U && exu_valid && id_ex_wordType === B) -> (1.U << u_alu.io.aluRes(1, 0))(3, 0)
     ))
+    io.data.data_sram_we := io.data.data_sram_be.orR
     //io.data.data_sram_addr := Cat(u_alu.io.aluRes(31, 2), Fill(2, 0.U))
     io.data.data_sram_addr := u_alu.io.aluRes
 

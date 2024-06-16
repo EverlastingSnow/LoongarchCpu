@@ -10,7 +10,7 @@ class mycpuIO extends Bundle {
     //data sram
     val data = new data_info()
     //trace debug
-    val debug = new debug_info()
+    //val debug = new debug_info()
 }
 
 class mycpu extends Module {
@@ -49,7 +49,7 @@ class mycpu extends Module {
 
     exu.io.data <> io.data
 
-    wbu.io.debug <> io.debug
+    //wbu.io.debug <> io.debug
     
     mem.io.data_sram_rdata <> io.data.data_sram_rdata
 }

@@ -34,15 +34,16 @@ class IFU extends Module {
 
         
     when(reset.asBool === true.B){
-        pc := "h1bfffffc".U(addrBitWidth.W)
+        pc := "h7ffffffc".U(addrBitWidth.W)
     }
     when(to_ifu_valid && ifu_allowin){
         pc := dnPc
     }
 
-    
-    io.inst.inst_sram_en := to_ifu_valid && ifu_allowin
-    io.inst.inst_sram_we := Fill(4, 0.U)
+    io.inst.inst_sram_ce := 1.U
+    io.inst.inst_sram_be := 0.U
+    io.inst.inst_sram_oe := to_ifu_valid && ifu_allowin
+    io.inst.inst_sram_we := 0.U
     io.inst.inst_sram_addr := dnPc
     io.inst.inst_sram_wdata := Fill(32, 0.U)
 
